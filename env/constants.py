@@ -3,3 +3,8 @@ Colors = {
     'green': (0, 255, 0),
     'white': (255, 255, 255),
 }
+
+PLAYER_WIDTH = 10 
+PLAYER_HEIGHT = 50 
+BALL_WIDTH = 10 
+BALL_HEIGHT = 10 
