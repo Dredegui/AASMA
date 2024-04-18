@@ -13,5 +13,8 @@ class Ball:
     def move(self):
         self.rect.move(self.x_speed, self.y_speed)
 
+    def undo(self):
+        self.rect.move(-self.x_speed, -self.y_speed)
+
     def render(self, screen):
         pygame.draw.circle(screen, (255, 255, 255), (self.x, self.y), self.radious)
