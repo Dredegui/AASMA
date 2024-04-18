@@ -20,9 +20,19 @@ class Game:
 
     def move(self):
         for player in self.players:
+            # if coll w player do nothing
+            # elif coll w ball ret: define ball movement
+            # else mov normally
             player.move()
+        
+        # check collisions and reverse unvalid moves
+        for i in range(len(self.players)):
+            if self.players[i].rect.collidelist(self.players[:i] + self.players[i+1:]):
+                self.players[i].undo()
+            if self.players[i].rect.colliderect(self.ball.rect):
+                self.ball.x_speed *= -1
+                self.ball.y_speed *= -1
         self.ball.move()
-
     def render(self):
         if self.screen is None:
             pygame.init()
