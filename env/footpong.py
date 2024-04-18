@@ -22,7 +22,22 @@ class footpong(ParallelEnv):
         pass
         
     def step(self, actions):
-        pass
+        # for all players do the respective action
+        for agent, action in actions.items():
+            player = self.game.players[self.agent_name_mapping[agent]]
+            if action == 0:
+                player.move_up()
+            elif action == 1:
+                player.move_down()
+            elif action == 2:
+                player.move_left()
+            elif action == 3:
+                player.move_right()
+            else:
+                player.stop()
+        state = self.game.move()
+        done = self.game.score[0] == 21 or self.game.score[1] == 21
+        return None, None, done, None
 
     def close(self):
         pygame.quit()
