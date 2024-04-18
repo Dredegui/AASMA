@@ -50,16 +50,19 @@ class Game:
     def move(self):
         # move, check collisions and reverse unvalid moves
         for i in range(len(self.players)):
+            # check player collisions with walls and other players
             self.players[i].move()
             if self.players[i].rect.collidelist(self.players[:i] + self.players[i+1:]) != -1 or self.players[i].rect.collidelist(self.walls) != -1:
                 self.players[i].undo()
+            # check player collisions with ball
             if self.players[i].rect.colliderect(self.ball.rect):
                 self.ball.x_speed = self.ball.rect.centerx - self.players[i].rect.centerx 
                 self.ball.y_speed = self.ball.rect.centery - self.players[i].rect.centery
+        # check ball collisions with goal and walls
         self.ball.move()
-        self.check_winner()
+        state = self.check_winner()
         self.check_ball_bounce()
-        
+        return state        
 
     def render(self):
         if self.screen is None:
