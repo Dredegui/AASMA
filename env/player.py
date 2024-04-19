@@ -5,6 +5,8 @@ class Player:
     def __init__(self, name, x, y, team, color=(255, 255, 255)):
         self.rect = pygame.Rect(x, y, PLAYER_WIDTH, PLAYER_HEIGHT)
         self.name = name
+        self.inicial_x = x
+        self.inicial_y = y
         self.y_speed = 0
         self.x_speed = 0
         self.team = team
@@ -35,6 +37,12 @@ class Player:
     
     def undo(self):
         self.rect.move_ip(-self.x_speed, -self.y_speed)
+
+    def reset_position(self):
+        self.rect.x = self.inicial_x
+        self.rect.y = self.inicial_y
+        self.x_speed = 0
+        self.y_speed = 0
 
     def render(self, screen):
         pygame.draw.rect(screen, self.color, (self.rect.left, self.rect.top, self.rect.width, self.rect.height))

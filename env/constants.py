@@ -3,15 +3,16 @@ COLORS = {
     'green': (0, 255, 0),
     'blue': (0, 0, 255),
     'white': (255, 255, 255),
+    'black': (0, 0, 0)
 }
+DISPLAY_SIZE = (800, 600)
 # Player details
 PLAYER_SPEED = 10
 PLAYER_WIDTH = 30
 PLAYER_HEIGHT = 30
 # Ball details
-BALL_SPEED = 14
-BALL_WIDTH = 10
-BALL_HEIGHT = 10
+BALL_SPEED = 16
+BALL_RADIUS = 10
 # Screen details 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
