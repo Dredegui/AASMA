@@ -18,3 +18,5 @@ SCREEN_HEIGHT = 600
 # Walls/Goals details
 BORDER_WIDTH = 10
 GOAL_HEIGHT = 100
+# Game details
+MAX_SCORE = 5

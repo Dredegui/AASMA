@@ -1,6 +1,7 @@
 from .game import Game
 from .ball import Ball
 from .player import Player
+from .constants import *
 import numpy as np
 
 import functools
@@ -51,10 +52,14 @@ class footpong(ParallelEnv):
                 player.move_right()
             else:
                 player.stop()
+
         state = self.game.move()
         observation = {agent: self.observe(agent) for agent in self.agents}
         rewards = {agent: 1 if state == self.game.players[self.agent_name_mapping[agent]].team else -1 for agent in self.agents}
-        done = self.game.score[0] == 21 or self.game.score[1] == 21
+        done = self.game.score[0] == MAX_SCORE or self.game.score[1] == MAX_SCORE
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                done = True
         return observation, rewards, done, None
 
     def close(self):
