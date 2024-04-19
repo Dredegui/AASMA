@@ -1,4 +1,5 @@
 from env.footpong import footpong
+from env.constants import *
 from time import sleep
 from sys import argv
 import random as r
@@ -21,18 +22,18 @@ if __name__ == "__main__":
             for agent in env.agents:
                 if agent == f"player{argv[1]}":
                     keys = pygame.key.get_pressed()
-                    if keys[pygame.K_LEFT]:
-                        actions[agent] = 2
-                    elif keys[pygame.K_RIGHT]:
-                        actions[agent] = 3
-                    elif keys[pygame.K_UP]:
-                        actions[agent] = 0
+                    if keys[pygame.K_UP]:
+                        actions[agent] = MOVE_UP
                     elif keys[pygame.K_DOWN]:
-                        actions[agent] = 1
+                        actions[agent] = MOVE_DOWN
+                    elif keys[pygame.K_LEFT]:
+                        actions[agent] = MOVE_LEFT
+                    elif keys[pygame.K_RIGHT]:
+                        actions[agent] = MOVE_RIGHT
                     else:
-                        actions[agent] = 4
+                        actions[agent] = DONT_MOVE
                 else:
-                    actions[agent] = 4
+                    actions[agent] = DONT_MOVE
         else:
             # choose random actions for all agents
             actions = {agent: env.action_space(agent).sample() for agent in env.agents}

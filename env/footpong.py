@@ -42,13 +42,13 @@ class footpong(ParallelEnv):
         # for all players do the respective action
         for agent, action in actions.items():
             player = self.game.players[self.agent_name_mapping[agent]]
-            if action == 0:
+            if action == MOVE_UP:
                 player.move_up()
-            elif action == 1:
+            elif action == MOVE_DOWN:
                 player.move_down()
-            elif action == 2:
+            elif action == MOVE_LEFT:
                 player.move_left()
-            elif action == 3:
+            elif action == MOVE_RIGHT:
                 player.move_right()
             else:
                 player.stop()

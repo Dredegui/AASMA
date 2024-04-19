@@ -8,10 +8,10 @@ class Game:
     def __init__(self):
         start_padding = 250
         self.players = [
-            Player("player1", start_padding, SCREEN_HEIGHT - (start_padding + PLAYER_HEIGHT), "team1", Colors["red"]),
-            Player("player2", SCREEN_WIDTH - (start_padding + PLAYER_WIDTH), SCREEN_HEIGHT - (start_padding + PLAYER_HEIGHT), "team2", Colors["green"]),
-            Player("player3", start_padding, start_padding, "team1", Colors["red"]),
-            Player("player4", SCREEN_WIDTH - (start_padding + PLAYER_WIDTH), start_padding, "team2", Colors["green"]),
+            Player("player1", start_padding, SCREEN_HEIGHT - (start_padding + PLAYER_HEIGHT), "team1", COLORS["red"]),
+            Player("player2", SCREEN_WIDTH - (start_padding + PLAYER_WIDTH), SCREEN_HEIGHT - (start_padding + PLAYER_HEIGHT), "team2", COLORS["green"]),
+            Player("player3", start_padding, start_padding, "team1", COLORS["red"]),
+            Player("player4", SCREEN_WIDTH - (start_padding + PLAYER_WIDTH), start_padding, "team2", COLORS["green"]),
         ]
         self.walls = [pygame.Rect(0, 0, SCREEN_WIDTH, 10), pygame.Rect(0, 0, 10, SCREEN_HEIGHT), pygame.Rect(0, 590, SCREEN_WIDTH, 10), pygame.Rect(790, 0, 10, SCREEN_HEIGHT)]
         # goals are in the middle of the left and right walls
@@ -90,9 +90,9 @@ class Game:
         for player in self.players:
             player.render(self.screen)
         for wall in self.walls:
-            pygame.draw.rect(self.screen, Colors["white"], wall)
+            pygame.draw.rect(self.screen, COLORS["white"], wall)
         for goal in self.goals:
-            pygame.draw.rect(self.screen, Colors["blue"], goal)
+            pygame.draw.rect(self.screen, COLORS["blue"], goal)
         self.ball.render(self.screen)
 
         pygame.display.flip()
