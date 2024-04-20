@@ -32,6 +32,7 @@ class footpong(ParallelEnv):
             "team": team_coords,
             "opponents": opponents_coords,
             "ball": ball_coords,
+            "ball_speed": np.array([self.game.ball.x_speed, self.game.ball.y_speed]),
         }
 
     def reset(self, seed=None, options=None):
@@ -81,6 +82,7 @@ class footpong(ParallelEnv):
             "team": gymnasium.spaces.Box(low=np.array([0, 0]), high=np.array([800, 600]), dtype=np.float32),
             "opponents": gymnasium.spaces.Box(low=np.array([0, 0, 0, 0]), high=np.array([800, 600, 800, 600]), dtype=np.float32),
             "ball": gymnasium.spaces.Box(low=np.array([0, 0]), high=np.array([800, 600]), dtype=np.float32),
+            "ball_speed": gymnasium.spaces.Box(low=-BALL_SPEED, high=BALL_SPEED, shape=(2,), dtype=np.float32),
         })
 
     # Action space should be defined here.
