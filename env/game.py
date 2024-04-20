@@ -48,24 +48,20 @@ class Game:
     def check_ball_bounce(self):
         # check collision with left wall
         if self.ball.rect.x <= self.walls[1].right:
-            self.ball.x_speed = -self.ball.x_speed  # reverse x speed
-            # undo the move and position the ball in contact with the wall
-            self.ball.rect.x = self.walls[1].right
+            self.ball.x_speed = -self.ball.x_speed # reverse x speed
+            self.ball.rect.x = self.walls[1].right # reposition ball in contact with left wall
         # check collision with right wall
         if (self.ball.rect.x + self.ball.rect.width) >= self.walls[3].left:
             self.ball.x_speed = -self.ball.x_speed # reverse x speed
-            # undo the move and position the ball in contact with the wall
-            self.ball.rect.x = self.walls[3].left - self.ball.rect.width
+            self.ball.rect.x = self.walls[3].left - self.ball.rect.width # reposition ball in contact with right wall
         # check collision with top wall
         if self.ball.rect.y <= self.walls[0].bottom:
             self.ball.y_speed = -self.ball.y_speed # reverse y speed
-            # undo the move and position the ball in contact with the wall
-            self.ball.rect.y = self.walls[0].bottom
+            self.ball.rect.y = self.walls[0].bottom # reposition ball in contact with top wall
         # check collision with bottom wall
         if (self.ball.rect.y + self.ball.rect.height) >= self.walls[2].top:
             self.ball.y_speed = -self.ball.y_speed # reverse y speed
-            # undo the move and position the ball in contact with the wall
-            self.ball.rect.y = self.walls[2].top - self.ball.rect.height
+            self.ball.rect.y = self.walls[2].top - self.ball.rect.height # reposition ball in contact with bottom wall
 
 
     def move(self):
@@ -74,15 +70,12 @@ class Game:
             # check player collisions with walls and other players
             player.move()
             if player.rect.collidelist(self.players[:i] + self.players[i+1:]) != -1 or player.rect.collidelist(self.walls) != -1:
-                # print("Player collision")
                 player.undo()
             # check player collisions with ball
             if player.rect.colliderect(self.ball.rect):
-                print("Old speed", self.ball.x_speed, self.ball.y_speed)
                 self.ball.x_speed = ((self.ball.rect.centerx - self.ball.x_speed) - (self.players[i].rect.centerx - self.players[i].x_speed))
                 self.ball.y_speed = ((self.ball.rect.centery - self.ball.y_speed) - (self.players[i].rect.centery - self.players[i].y_speed))
                 self.ball.normalize_speed()
-                print("New speed", self.ball.x_speed, self.ball.y_speed)
         # check ball collisions with goal and walls
         self.ball.move()
         state = self.check_goal()

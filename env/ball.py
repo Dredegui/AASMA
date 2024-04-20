@@ -5,8 +5,8 @@ class Ball:
     def __init__(self, x, y, radious):
         self.rect = pygame.Rect(x, y, radious*2, radious*2)
         self.radious = radious
-        self.inicial_x = x
-        self.inicial_y = y
+        self.initial_x = x
+        self.initial_y = y
         self.x_speed = 0
         self.y_speed = 0
 
@@ -27,8 +27,8 @@ class Ball:
             self.y_speed = (self.y_speed / norm) * BALL_SPEED
     
     def reset_position(self):
-        self.rect.x = self.inicial_x
-        self.rect.y = self.inicial_y
+        self.rect.x = self.initial_x
+        self.rect.y = self.initial_y
         self.x_speed = 0
         self.y_speed = 0
 
