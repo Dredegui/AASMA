@@ -7,7 +7,9 @@ COLORS = {
     'orange': (255, 165, 0),
     'black': (0, 0, 0)
 }
-DISPLAY_SIZE = (800, 600)
+# Screen details
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
 # Player details
 PLAYER_SPEED = 10
 PLAYER_WIDTH = 30
@@ -15,9 +17,6 @@ PLAYER_HEIGHT = 40
 # Ball details
 BALL_SPEED = 16
 BALL_RADIUS = 8
-# Screen details 
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
 # Wall/Goal details
 BORDER_WIDTH = 10
 GOAL_HEIGHT = 225

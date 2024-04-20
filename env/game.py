@@ -86,7 +86,7 @@ class Game:
     def render(self):
         if self.screen is None:
             pygame.init()
-            self.screen = pygame.display.set_mode(DISPLAY_SIZE)
+            self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
             pygame.display.set_caption("Footpong")
         self.screen.fill(COLORS["black"])
         for player in self.players:
