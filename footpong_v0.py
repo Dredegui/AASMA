@@ -23,6 +23,7 @@ if __name__ == "__main__":
     done = False
     while not done:
         if user_mode:
+            clock = pygame.time.Clock()
             actions = {}
             for agent in env.agents:
                 keys = pygame.key.get_pressed()
@@ -50,6 +51,7 @@ if __name__ == "__main__":
                         actions[agent] = DONT_MOVE
                 else:
                     actions[agent] = DONT_MOVE
+            clock.tick(60)
         else:
             # choose random actions for all agents
             actions = {agent: env.action_space(agent).sample() for agent in env.agents}
@@ -67,6 +69,5 @@ if __name__ == "__main__":
         #print(actions)
         observations, rewards, done, _ = env.step(actions)
         env.render()
-        sleep(0.1)
 
     env.close()
