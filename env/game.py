@@ -44,21 +44,41 @@ class Game:
 
     def check_ball_bounce(self):
         collided = False
-        top_bot_collision = self.ball.rect.collidelist([self.walls[0], self.walls[2]])
-        left_right_collision = self.ball.rect.collidelist([self.walls[1], self.walls[3]])
-        # if ball collides with top or bottom walls, reverse y_speed
-        if top_bot_collision != -1: 
-            print("Ball collision with top/bot wall")
+        # check collision with left wall
+        if self.ball.rect.x <= self.walls[1].right:
             collided = True
-            self.ball.y_speed = -self.ball.y_speed
-        # if ball collides with left or right walls, reverse x_speed
-        if left_right_collision != -1: 
-            print("Ball collision with left/right wall")
-            collided = True
-            self.ball.x_speed = -self.ball.x_speed
-        # if there was a collision, undo the previous move and move correctly
-        if collided:
+            self.ball.x_speed = -self.ball.x_speed  # reverse x speed
+            # undo the move and position the ball in contact with the wall
             self.ball.undo()
+            self.ball.rect.left = self.walls[1].right
+            self.ball.rect.x = self.walls[1].right
+        # check collision with right wall
+        if (self.ball.rect.x + self.ball.radious) >= self.walls[3].left:
+            collided = True
+            self.ball.x_speed = -self.ball.x_speed # reverse x speed
+            # undo the move and position the ball in contact with the wall
+            self.ball.undo()
+            self.ball.rect.right = self.walls[3].left
+            self.ball.rect.x = self.walls[3].left - self.ball.radious
+        # check collision with top wall
+        if self.ball.rect.y <= self.walls[0].bottom:
+            collided = True
+            self.ball.y_speed = -self.ball.y_speed # reverse y speed
+            # undo the move and position the ball in contact with the wall
+            self.ball.undo()
+            self.ball.rect.top = self.walls[0].bottom
+            self.ball.rect.y = self.walls[0].bottom
+        # check collision with bottom wall
+        if (self.ball.rect.y + self.ball.radious) >= self.walls[2].top:
+            collided = True
+            self.ball.y_speed = -self.ball.y_speed # reverse y speed
+            # undo the move and position the ball in contact with the wall
+            self.ball.undo()
+            self.ball.rect.bottom = self.walls[2].top
+            self.ball.rect.y = self.walls[2].top - self.ball.radious
+
+        # if there was a collision remake the move
+        if collided:
             self.ball.move()
 
     def move(self):
@@ -71,13 +91,11 @@ class Game:
                 player.undo()
             # check player collisions with ball
             if player.rect.colliderect(self.ball.rect):
-                # print old ball speed
-                print(self.ball.x_speed, self.ball.y_speed)
-                self.ball.x_speed = ((self.ball.rect.centerx - self.ball.x_speed) - (self.players[i].rect.centerx - self.players[i].x_speed)) 
-                self.ball.y_speed = ((self.ball.rect.centery - self.ball.y_speed) - (self.players[i].rect.centery - self.players[i].y_speed)) 
+                print("Old speed", self.ball.x_speed, self.ball.y_speed)
+                self.ball.x_speed = ((self.ball.rect.centerx - self.ball.x_speed) - (self.players[i].rect.centerx - self.players[i].x_speed))
+                self.ball.y_speed = ((self.ball.rect.centery - self.ball.y_speed) - (self.players[i].rect.centery - self.players[i].y_speed))
                 self.ball.normalize_speed()
-                # print new ball speed
-                print(self.ball.x_speed, self.ball.y_speed)
+                print("New speed", self.ball.x_speed, self.ball.y_speed)
         # check ball collisions with goal and walls
         self.ball.move()
         state = self.check_goal()

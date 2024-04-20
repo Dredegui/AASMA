@@ -2,7 +2,7 @@ import pygame
 from .constants import *
 
 class Player:
-    def __init__(self, name, x, y, team, color=(255, 255, 255)):
+    def __init__(self, name, x, y, team, color=COLORS["white"]):
         self.rect = pygame.Rect(x, y, PLAYER_WIDTH, PLAYER_HEIGHT)
         self.name = name
         self.inicial_x = x
