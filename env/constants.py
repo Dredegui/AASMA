@@ -27,3 +27,7 @@ MOVE_DOWN = 1
 MOVE_LEFT = 2
 MOVE_RIGHT = 3
 DONT_MOVE = 4
+# User mode details
+NO_USER = 0
+ONE_USER = 1
+TWO_USER = 2

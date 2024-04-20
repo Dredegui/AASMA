@@ -10,10 +10,15 @@ if __name__ == "__main__":
     env.reset()
     env.render()
 
-    user_mode = False
+    user_mode = NO_USER
     if len(argv) == 2 and argv[1] in ['1', '2', '3', '4']:
         print(f"User mode on!\nUse arrow keys to move player {argv[1]}")
-        user_mode = True
+        user_mode = ONE_USER
+
+    if len(argv) == 3 and argv[1] != argv[2] and argv[1] in ['1', '2', '3', '4'] and argv[2] in ['1', '2', '3', '4']:
+        print(f"User mode on!\nUse arrow keys to move player {argv[1]}")
+        print(f"Use WASD keys to move player {argv[2]}")
+        user_mode = TWO_USER
 
     done = False
     while not done:
@@ -29,6 +34,18 @@ if __name__ == "__main__":
                     elif keys[pygame.K_LEFT]:
                         actions[agent] = MOVE_LEFT
                     elif keys[pygame.K_RIGHT]:
+                        actions[agent] = MOVE_RIGHT
+                    else:
+                        actions[agent] = DONT_MOVE
+                elif user_mode == TWO_USER and agent == f"player{argv[2]}":
+                    keys = pygame.key.get_pressed()
+                    if keys[pygame.K_w]:
+                        actions[agent] = MOVE_UP
+                    elif keys[pygame.K_s]:
+                        actions[agent] = MOVE_DOWN
+                    elif keys[pygame.K_a]:
+                        actions[agent] = MOVE_LEFT
+                    elif keys[pygame.K_d]:
                         actions[agent] = MOVE_RIGHT
                     else:
                         actions[agent] = DONT_MOVE
