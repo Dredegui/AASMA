@@ -26,14 +26,12 @@ class Game:
         # if ball collides with goals, score and reset ball and player positions
         # check left goal
         if self.ball.rect.x <= self.goals[0].right:
-            print(self.ball.rect.x)
-            if self.ball.rect.y >= self.goals[0].top and (self.ball.rect.y + self.ball.radious) <= self.goals[0].bottom:
+            if self.ball.rect.y >= self.goals[0].top and (self.ball.rect.y + self.ball.rect.width) <= self.goals[0].bottom:
                 self.score_goal(1)
                 return 1
         # check right goal
-        if (self.ball.rect.x + self.ball.radious) >= self.goals[1].left:
-            print(self.ball.rect.x + self.ball.radious, self.ball.rect.x , self.ball.radious, self.goals[1].left)
-            if self.ball.rect.y >= self.goals[1].top and (self.ball.rect.y + self.ball.radious) <= self.goals[1].bottom:
+        if (self.ball.rect.x + self.ball.rect.width) >= self.goals[1].left:
+            if self.ball.rect.y >= self.goals[1].top and (self.ball.rect.y + self.ball.rect.width) <= self.goals[1].bottom:
                 self.score_goal(0)
                 return 2
         return 0
@@ -48,43 +46,27 @@ class Game:
         self.ball.reset_position()
 
     def check_ball_bounce(self):
-        collided = False
         # check collision with left wall
         if self.ball.rect.x <= self.walls[1].right:
-            collided = True
             self.ball.x_speed = -self.ball.x_speed  # reverse x speed
             # undo the move and position the ball in contact with the wall
-            self.ball.undo()
-            self.ball.rect.left = self.walls[1].right
             self.ball.rect.x = self.walls[1].right
         # check collision with right wall
-        if (self.ball.rect.x + self.ball.radious) >= self.walls[3].left:
-            collided = True
+        if (self.ball.rect.x + self.ball.rect.width) >= self.walls[3].left:
             self.ball.x_speed = -self.ball.x_speed # reverse x speed
             # undo the move and position the ball in contact with the wall
-            self.ball.undo()
-            self.ball.rect.right = self.walls[3].left
-            self.ball.rect.x = self.walls[3].left - self.ball.radious
+            self.ball.rect.x = self.walls[3].left - self.ball.rect.width
         # check collision with top wall
         if self.ball.rect.y <= self.walls[0].bottom:
-            collided = True
             self.ball.y_speed = -self.ball.y_speed # reverse y speed
             # undo the move and position the ball in contact with the wall
-            self.ball.undo()
-            self.ball.rect.top = self.walls[0].bottom
             self.ball.rect.y = self.walls[0].bottom
         # check collision with bottom wall
-        if (self.ball.rect.y + self.ball.radious) >= self.walls[2].top:
-            collided = True
+        if (self.ball.rect.y + self.ball.rect.height) >= self.walls[2].top:
             self.ball.y_speed = -self.ball.y_speed # reverse y speed
             # undo the move and position the ball in contact with the wall
-            self.ball.undo()
-            self.ball.rect.bottom = self.walls[2].top
-            self.ball.rect.y = self.walls[2].top - self.ball.radious
+            self.ball.rect.y = self.walls[2].top - self.ball.rect.height
 
-        # if there was a collision remake the move
-        if collided:
-            self.ball.move()
 
     def move(self):
         # move, check collisions and reverse invalid moves
@@ -117,7 +99,7 @@ class Game:
         for player in self.players:
             player.render(self.screen)
         for wall in self.walls:
-            pygame.draw.rect(self.screen, COLORS["white"], wall)
+            pygame.draw.rect(self.screen, COLORS["orange"], wall)
         for goal in self.goals:
             pygame.draw.rect(self.screen, COLORS["blue"], goal)
         self.ball.render(self.screen)
