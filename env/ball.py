@@ -3,7 +3,7 @@ from .constants import *
 
 class Ball:
     def __init__(self, x, y, radious):
-        self.rect = pygame.Rect(x, y, radious, radious)
+        self.rect = pygame.Rect(x, y, radious*2, radious*2)
         self.radious = radious
         self.inicial_x = x
         self.inicial_y = y
@@ -11,6 +11,13 @@ class Ball:
         self.y_speed = 0
 
     def move(self):
+        total = abs(self.x_speed) + abs(self.y_speed)
+        if total > 4:
+            self.x_speed = (self.x_speed / total) * (total - 1/10) 
+            self.y_speed = (self.y_speed / total) * (total - 1/10)
+        else:
+            self.x_speed = 0
+            self.y_speed = 0
         self.rect.move_ip(self.x_speed, self.y_speed)
 
     def normalize_speed(self):
@@ -18,9 +25,6 @@ class Ball:
         if norm != 0:
             self.x_speed = (self.x_speed / norm) * BALL_SPEED
             self.y_speed = (self.y_speed / norm) * BALL_SPEED
-
-    def undo(self):
-        self.rect.move_ip(-self.x_speed, -self.y_speed)
     
     def reset_position(self):
         self.rect.x = self.inicial_x
@@ -29,4 +33,4 @@ class Ball:
         self.y_speed = 0
 
     def render(self, screen):
-        pygame.draw.circle(screen, COLORS["white"], (self.rect.x, self.rect.y), self.radious)
+        pygame.draw.circle(screen, COLORS["white"], (self.rect.centerx, self.rect.centery), self.radious)
