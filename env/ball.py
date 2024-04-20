@@ -13,6 +13,12 @@ class Ball:
     def move(self):
         self.rect.move_ip(self.x_speed, self.y_speed)
 
+    def normalize_speed(self):
+        norm = abs(self.x_speed) + abs(self.y_speed)
+        if norm != 0:
+            self.x_speed = (self.x_speed / norm) * BALL_SPEED
+            self.y_speed = (self.y_speed / norm) * BALL_SPEED
+
     def undo(self):
         self.rect.move_ip(-self.x_speed, -self.y_speed)
     

@@ -25,8 +25,8 @@ if __name__ == "__main__":
         if user_mode:
             actions = {}
             for agent in env.agents:
+                keys = pygame.key.get_pressed()
                 if agent == f"player{argv[1]}":
-                    keys = pygame.key.get_pressed()
                     if keys[pygame.K_UP]:
                         actions[agent] = MOVE_UP
                     elif keys[pygame.K_DOWN]:
@@ -38,7 +38,6 @@ if __name__ == "__main__":
                     else:
                         actions[agent] = DONT_MOVE
                 elif user_mode == TWO_USER and agent == f"player{argv[2]}":
-                    keys = pygame.key.get_pressed()
                     if keys[pygame.K_w]:
                         actions[agent] = MOVE_UP
                     elif keys[pygame.K_s]:

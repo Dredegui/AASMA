@@ -73,10 +73,7 @@ class Game:
                 print(self.ball.x_speed, self.ball.y_speed)
                 self.ball.x_speed = ((self.ball.rect.centerx - self.ball.x_speed) - (self.players[i].rect.centerx - self.players[i].x_speed)) 
                 self.ball.y_speed = ((self.ball.rect.centery - self.ball.y_speed) - (self.players[i].rect.centery - self.players[i].y_speed)) 
-                norm = abs(self.ball.x_speed) + abs(self.ball.y_speed)
-                if norm != 0:
-                    self.ball.x_speed = (self.ball.x_speed / norm) * BALL_SPEED
-                    self.ball.y_speed = (self.ball.y_speed / norm) * BALL_SPEED
+                self.ball.normalize_speed()
                 # print new ball speed
                 print(self.ball.x_speed, self.ball.y_speed)
         # check ball collisions with goal and walls
