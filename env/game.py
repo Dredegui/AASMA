@@ -6,7 +6,7 @@ import pygame
 
 class Game:
     def __init__(self):
-        start_padding = 250
+        start_padding = 200
         self.players = [
             Player("player1", start_padding, SCREEN_HEIGHT - (start_padding + PLAYER_HEIGHT), "team1", COLORS["red"]),
             Player("player2", SCREEN_WIDTH - (start_padding + PLAYER_WIDTH), SCREEN_HEIGHT - (start_padding + PLAYER_HEIGHT), "team2", COLORS["green"]),
@@ -24,15 +24,16 @@ class Game:
 
     def check_goal(self):
         # if ball collides with goals, score and reset ball and player positions
-        if self.ball.rect.collidelist(self.goals) == 1: # team 1 scores
+        goal = self.ball.rect.collidelist(self.goals)
+        if goal == 1: # team 1 scores
             self.score_goal(1)
             return 1
-        elif self.ball.rect.collidelist(self.goals) == 0: # team 2 scores
+        elif goal == 0: # team 2 scores
             self.score_goal(0)
             return 2
         return 0
 
-    def score_goal(self, team):
+    def score_goal(self, team: int):
         # update score
         self.score[team] += 1
         print(f"Goal scored: {self.score[0]} - {self.score[1]}")
@@ -42,33 +43,34 @@ class Game:
         self.ball.reset_position()
 
     def check_ball_bounce(self):
-        undo_move = False
+        collided = False
         top_bot_collision = self.ball.rect.collidelist([self.walls[0], self.walls[2]])
         left_right_collision = self.ball.rect.collidelist([self.walls[1], self.walls[3]])
-
-        if top_bot_collision != -1: # if ball collides with top or bottom walls, reverse y_speed
-            print("Ball collision with wall")
-            self.ball.undo()
-            undo_move = True
+        # if ball collides with top or bottom walls, reverse y_speed
+        if top_bot_collision != -1: 
+            print("Ball collision with top/bot wall")
+            collided = True
             self.ball.y_speed = -self.ball.y_speed
-        if left_right_collision != -1: # if ball collides with left or right walls, reverse x_speed
-            print("Ball collision with wall")
-            if not undo_move:
-                self.ball.undo()
+        # if ball collides with left or right walls, reverse x_speed
+        if left_right_collision != -1: 
+            print("Ball collision with left/right wall")
+            collided = True
             self.ball.x_speed = -self.ball.x_speed
-        if undo_move:
+        # if there was a collision, undo the previous move and move correctly
+        if collided:
+            self.ball.undo()
             self.ball.move()
 
     def move(self):
         # move, check collisions and reverse invalid moves
-        for i in range(len(self.players)):
+        for i, player in enumerate(self.players):
             # check player collisions with walls and other players
-            self.players[i].move()
-            if self.players[i].rect.collidelist(self.players[:i] + self.players[i+1:]) != -1 or self.players[i].rect.collidelist(self.walls) != -1:
+            player.move()
+            if player.rect.collidelist(self.players[:i] + self.players[i+1:]) != -1 or player.rect.collidelist(self.walls) != -1:
                 # print("Player collision")
-                self.players[i].undo()
+                player.undo()
             # check player collisions with ball
-            if self.players[i].rect.colliderect(self.ball.rect):
+            if player.rect.colliderect(self.ball.rect):
                 # print old ball speed
                 print(self.ball.x_speed, self.ball.y_speed)
                 self.ball.x_speed = ((self.ball.rect.centerx - self.ball.x_speed) - (self.players[i].rect.centerx - self.players[i].x_speed)) 
@@ -81,12 +83,13 @@ class Game:
         state = self.check_goal()
         if state == 0:
             self.check_ball_bounce()
-        return state        
+        return state
 
     def render(self):
         if self.screen is None:
             pygame.init()
             self.screen = pygame.display.set_mode(DISPLAY_SIZE)
+            pygame.display.set_caption("Footpong")
         self.screen.fill(COLORS["black"])
         for player in self.players:
             player.render(self.screen)

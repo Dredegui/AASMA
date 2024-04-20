@@ -29,4 +29,4 @@ class Ball:
         self.y_speed = 0
 
     def render(self, screen):
-        pygame.draw.circle(screen, (255, 255, 255), (self.rect.left, self.rect.top), self.radious)
+        pygame.draw.circle(screen, COLORS["white"], (self.rect.left, self.rect.top), self.radious)
