@@ -24,13 +24,18 @@ class Game:
 
     def check_goal(self):
         # if ball collides with goals, score and reset ball and player positions
-        goal = self.ball.rect.collidelist(self.goals)
-        if goal == 1: # team 1 scores
-            self.score_goal(1)
-            return 1
-        elif goal == 0: # team 2 scores
-            self.score_goal(0)
-            return 2
+        # check left goal
+        if self.ball.rect.x <= self.goals[0].right:
+            print(self.ball.rect.x)
+            if self.ball.rect.y >= self.goals[0].top and (self.ball.rect.y + self.ball.radious) <= self.goals[0].bottom:
+                self.score_goal(1)
+                return 1
+        # check right goal
+        if (self.ball.rect.x + self.ball.radious) >= self.goals[1].left:
+            print(self.ball.rect.x + self.ball.radious, self.ball.rect.x , self.ball.radious, self.goals[1].left)
+            if self.ball.rect.y >= self.goals[1].top and (self.ball.rect.y + self.ball.radious) <= self.goals[1].bottom:
+                self.score_goal(0)
+                return 2
         return 0
 
     def score_goal(self, team: int):
