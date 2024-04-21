@@ -96,18 +96,31 @@ class Game:
             self.check_ball_bounce()
         return state
 
-    def render(self):
-        if self.screen is None:
-            pygame.init()
-            self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-            pygame.display.set_caption("Footpong")
-        self.screen.fill(COLORS["black"])
-        for player in self.players:
-            player.render(self.screen)
-        for wall in self.walls.values():
-            pygame.draw.rect(self.screen, COLORS["orange"], wall)
-        self.ball.render(self.screen)
+    def render(self, mode="human"):
+        if mode == "human":
+            if self.screen is None:
+                pygame.init()
+                self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+                pygame.display.set_caption("Footpong")
+            self.screen.fill(COLORS["black"])
+            for player in self.players:
+                player.render(self.screen)
+            for wall in self.walls.values():
+                pygame.draw.rect(self.screen, COLORS["orange"], wall)
+            self.ball.render(self.screen)
 
-        pygame.display.flip()
+            pygame.display.flip()
 
-        return self.screen
+            return self.screen
+
+        if mode == "rgb_array":
+            if self.screen is None:
+                self.screen = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+            self.screen.fill(COLORS["black"])
+            for player in self.players:
+                player.render(self.screen)
+            for wall in self.walls.values():
+                pygame.draw.rect(self.screen, COLORS["orange"], wall)
+            self.ball.render(self.screen)
+
+            return pygame.surfarray.array3d(self.screen)

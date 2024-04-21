@@ -6,18 +6,55 @@ import numpy as np
 
 import functools
 from pettingzoo import ParallelEnv
-import gymnasium.spaces
+import gymnasium
+from pettingzoo.utils import parallel_to_aec, wrappers
 import pygame
+
+def env(render_mode=None):
+    """
+    The env function often wraps the environment in wrappers by default.
+    You can find full documentation for these methods
+    elsewhere in the developer documentation.
+    """
+    internal_render_mode = render_mode if render_mode in ["rgb_array"] else "human"
+
+    env = raw_env(render_mode=internal_render_mode)
+    # This wrapper is only for environments which print results to the terminal
+    if render_mode == "ansi":
+        env = wrappers.CaptureStdoutWrapper(env)
+    # this wrapper helps error handling for discrete action spaces
+    env = wrappers.AssertOutOfBoundsWrapper(env)
+    # Provides a wide vareity of helpful user errors
+    # Strongly recommended
+    env = wrappers.OrderEnforcingWrapper(env)
+    return env
+
+def raw_env(render_mode=None):
+    """
+    To support the AEC API, the raw_env() function just uses the from_parallel
+    function to convert from a ParallelEnv to an AEC env
+    """
+    env = footpong(render_mode=render_mode)
+    env = parallel_to_aec(env)
+    return env
 
 class footpong(ParallelEnv):
     metadata = {
         "name": "foot_pong_v0",
+        "render_modes": ["human", "rgb_array"],
     }
 
-    def __init__(self):
+    timestep_limit = 1_000_000
+
+    def __init__(self, render_mode=None):
         self.game = Game()
-        self.agents = [p.name for p in self.game.players]
+        self.possible_agents = [p.name for p in self.game.players]
+        self.agents = self.possible_agents[:]
         self.agent_name_mapping = {p.name: i for i, p in enumerate(self.game.players)}
+        self.observation_spaces = {agent: self.observation_space(agent) for agent in self.agents}
+        self.action_spaces = {agent: self.action_space(agent) for agent in self.agents}
+        self.timestamp = 0
+        self.render_mode = render_mode
  
     def observe(self, agent):
         player = self.game.players[self.agent_name_mapping[agent]]
@@ -36,8 +73,13 @@ class footpong(ParallelEnv):
         }
 
     def reset(self, seed=None, options=None):
+        self.timestamp = 0
+        self.agents = self.possible_agents[:]
         self.game = Game()
-        return {agent: self.observe(agent) for agent in self.agents}
+        observations = {agent: self.observe(agent) for agent in self.agents}
+        infos = {agent: {} for agent in self.agents}
+
+        return observations, infos
         
     def step(self, actions):
         # for all players do the respective action
@@ -58,16 +100,33 @@ class footpong(ParallelEnv):
         observation = {agent: self.observe(agent) for agent in self.agents}
         rewards = {agent: 1 if state == self.game.players[self.agent_name_mapping[agent]].team else -1 for agent in self.agents}
         done = self.game.score[0] == MAX_SCORE or self.game.score[1] == MAX_SCORE
+        terminations = {agent: done for agent in self.agents}
+        truncations = {agent: self.timestamp > self.timestep_limit for agent in self.agents}
+        
+        # When in human mode, check if user closed the window
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                done = True
-        return observation, rewards, done, None
+                truncations = {agent: True for agent in self.agents}
+
+        self.timestamp += 1
+        infos = {agent: {} for agent in self.agents}
+
+        if any(terminations.values()) or all(truncations.values()):
+            self.agents = []
+        
+        return observation, rewards, terminations, truncations, infos
 
     def close(self):
         pygame.quit()
         
     def render(self):
-        self.game.render()
+        if self.render_mode is None:
+            gymnasium.logger.warn(
+                "You are calling render method without specifying any render mode."
+            )
+            return
+        
+        return self.game.render(self.render_mode)
 
     # Observation space should be defined here.
     # lru_cache allows observation and action spaces to be memoized, reducing clock cycles required to get each agent's space.

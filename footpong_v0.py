@@ -1,4 +1,4 @@
-from env.footpong import footpong
+import env.footpong
 from env.constants import *
 from time import sleep
 from sys import argv
@@ -6,7 +6,7 @@ import random as r
 import pygame
 
 if __name__ == "__main__":
-    env = footpong()
+    env = env.footpong.footpong(render_mode="human")
     env.reset()
     env.render()
 
@@ -20,9 +20,8 @@ if __name__ == "__main__":
         print(f"Use WASD keys to move player {argv[2]}")
         user_mode = TWO_USER
 
-    done = False
     clock = pygame.time.Clock()
-    while not done:
+    while env.agents:
         if user_mode:
             actions = {}
             for agent in env.agents:
@@ -57,7 +56,7 @@ if __name__ == "__main__":
             actions = {agent: env.action_space(agent).sample() for agent in env.agents}
             clock.tick(30)
 
-        observations, rewards, done, _ = env.step(actions)
+        observations, rewards, terminations, truncations, infos = env.step(actions)
         env.render()
 
     env.close()
