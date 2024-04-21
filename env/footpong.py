@@ -104,9 +104,10 @@ class footpong(ParallelEnv):
         truncations = {agent: self.timestamp > self.timestep_limit for agent in self.agents}
         
         # When in human mode, check if user closed the window
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                truncations = {agent: True for agent in self.agents}
+        if self.render_mode == "human":
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    truncations = {agent: True for agent in self.agents}
 
         self.timestamp += 1
         infos = {agent: {} for agent in self.agents}
