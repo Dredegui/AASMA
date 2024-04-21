@@ -3,6 +3,7 @@ from .ball import Ball
 from .constants import *
 
 import pygame
+import cv2
 
 class Game:
     def __init__(self):
@@ -123,4 +124,8 @@ class Game:
                 pygame.draw.rect(self.screen, COLORS["orange"], wall)
             self.ball.render(self.screen)
 
-            return pygame.surfarray.array3d(self.screen)
+            array = pygame.surfarray.array3d(self.screen)
+            array = cv2.rotate(array, cv2.ROTATE_90_CLOCKWISE)
+            array = cv2.flip(array, 1)
+            return array
+
