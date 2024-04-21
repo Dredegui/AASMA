@@ -14,26 +14,30 @@ class Game:
             Player("player4", SCREEN_WIDTH - (start_padding + PLAYER_WIDTH), start_padding, "team2", COLORS["green"]),
         ]
         self.ball = Ball(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, BALL_RADIUS)
-        self.walls = [pygame.Rect(0, 0, SCREEN_WIDTH, 10), pygame.Rect(0, 0, 10, SCREEN_HEIGHT), pygame.Rect(0, 590, SCREEN_WIDTH, 10), pygame.Rect(790, 0, 10, SCREEN_HEIGHT)]
-        # goals are in the middle of the left and right walls
-        self.goals = [pygame.Rect(0, SCREEN_HEIGHT/2 - GOAL_HEIGHT/2, BORDER_WIDTH, GOAL_HEIGHT), pygame.Rect(790, SCREEN_HEIGHT/2 - GOAL_HEIGHT/2, BORDER_WIDTH, GOAL_HEIGHT)]
+        self.walls = {
+            "top": pygame.Rect(0, 0, SCREEN_WIDTH, BORDER_WIDTH),
+            "bottom": pygame.Rect(0, SCREEN_HEIGHT - BORDER_WIDTH, SCREEN_WIDTH, BORDER_WIDTH),
+            "left_top": pygame.Rect(0, 0, BORDER_WIDTH, SCREEN_HEIGHT/2 - GOAL_HEIGHT/2),
+            "left_bottom": pygame.Rect(0, SCREEN_HEIGHT/2 + GOAL_HEIGHT/2, BORDER_WIDTH, SCREEN_HEIGHT/2 - GOAL_HEIGHT/2),
+            "right_top": pygame.Rect(SCREEN_WIDTH - BORDER_WIDTH, 0, BORDER_WIDTH, SCREEN_HEIGHT/2 - GOAL_HEIGHT/2),
+            "right_bottom": pygame.Rect(SCREEN_WIDTH - BORDER_WIDTH, SCREEN_HEIGHT/2 + GOAL_HEIGHT/2, BORDER_WIDTH, SCREEN_HEIGHT/2 - GOAL_HEIGHT/2),
+        }
         self.score = [0, 0]
         self.done = False
         self.winner = None
         self.screen = None
 
     def check_goal(self):
-        # if ball collides with goals, score and reset ball and player positions
         # check left goal
-        if self.ball.rect.x <= self.goals[0].right:
-            if self.ball.rect.y >= self.goals[0].top and (self.ball.rect.y + self.ball.rect.width) <= self.goals[0].bottom:
-                self.score_goal(1)
-                return 1
+        if self.ball.rect.x + self.ball.rect.width < 0:
+            self.score_goal(1)
+            return 1
+
         # check right goal
-        if (self.ball.rect.x + self.ball.rect.width) >= self.goals[1].left:
-            if self.ball.rect.y >= self.goals[1].top and (self.ball.rect.y + self.ball.rect.width) <= self.goals[1].bottom:
-                self.score_goal(0)
-                return 2
+        if self.ball.rect.x > SCREEN_WIDTH:
+            self.score_goal(0)
+            return 1
+        
         return 0
 
     def score_goal(self, team: int):
@@ -46,22 +50,30 @@ class Game:
         self.ball.reset_position()
 
     def check_ball_bounce(self):
-        # check collision with left wall
-        if self.ball.rect.x <= self.walls[1].right:
-            self.ball.x_speed = -self.ball.x_speed # reverse x speed
-            self.ball.rect.x = self.walls[1].right # reposition ball in contact with left wall
-        # check collision with right wall
-        if (self.ball.rect.x + self.ball.rect.width) >= self.walls[3].left:
-            self.ball.x_speed = -self.ball.x_speed # reverse x speed
-            self.ball.rect.x = self.walls[3].left - self.ball.rect.width # reposition ball in contact with right wall
+        # check collision with left_top wall
+        if self.ball.rect.colliderect(self.walls["left_top"]):
+            self.ball.x_speed = -self.ball.x_speed
+            self.ball.rect.x = self.walls["left_top"].right
+        # check collision with left_bottom wall
+        if self.ball.rect.colliderect(self.walls["left_bottom"]):
+            self.ball.x_speed = -self.ball.x_speed
+            self.ball.rect.x = self.walls["left_bottom"].right
+        # check collision with right_top wall
+        if self.ball.rect.colliderect(self.walls["right_top"]):
+            self.ball.x_speed = -self.ball.x_speed
+            self.ball.rect.x = self.walls["right_top"].left - self.ball.rect.width
+        # check collision with right_bottom wall
+        if self.ball.rect.colliderect(self.walls["right_bottom"]):
+            self.ball.x_speed = -self.ball.x_speed
+            self.ball.rect.x = self.walls["right_bottom"].left - self.ball.rect.width
         # check collision with top wall
-        if self.ball.rect.y <= self.walls[0].bottom:
-            self.ball.y_speed = -self.ball.y_speed # reverse y speed
-            self.ball.rect.y = self.walls[0].bottom # reposition ball in contact with top wall
+        if self.ball.rect.y <= self.walls["top"].bottom:
+            self.ball.y_speed = -self.ball.y_speed
+            self.ball.rect.y = self.walls["top"].bottom
         # check collision with bottom wall
-        if (self.ball.rect.y + self.ball.rect.height) >= self.walls[2].top:
-            self.ball.y_speed = -self.ball.y_speed # reverse y speed
-            self.ball.rect.y = self.walls[2].top - self.ball.rect.height # reposition ball in contact with bottom wall
+        if (self.ball.rect.y + self.ball.rect.height) >= self.walls["bottom"].top:
+            self.ball.y_speed = -self.ball.y_speed
+            self.ball.rect.y = self.walls["bottom"].top - self.ball.rect.height
 
 
     def move(self):
@@ -69,7 +81,8 @@ class Game:
         for i, player in enumerate(self.players):
             # check player collisions with walls and other players
             player.move()
-            if player.rect.collidelist(self.players[:i] + self.players[i+1:]) != -1 or player.rect.collidelist(self.walls) != -1:
+            if player.rect.collidelist(self.players[:i] + self.players[i+1:]) != -1 or player.rect.collidelist(list(self.walls.values())) != -1 \
+            or player.rect.x < 0 or player.rect.x + player.rect.width > SCREEN_WIDTH:
                 player.undo()
             # check player collisions with ball
             if player.rect.colliderect(self.ball.rect):
@@ -91,10 +104,8 @@ class Game:
         self.screen.fill(COLORS["black"])
         for player in self.players:
             player.render(self.screen)
-        for wall in self.walls:
+        for wall in self.walls.values():
             pygame.draw.rect(self.screen, COLORS["orange"], wall)
-        for goal in self.goals:
-            pygame.draw.rect(self.screen, COLORS["blue"], goal)
         self.ball.render(self.screen)
 
         pygame.display.flip()
