@@ -57,20 +57,11 @@ class footpong(ParallelEnv):
         self.render_mode = render_mode
  
     def observe(self, agent):
-        player = self.game.players[self.agent_name_mapping[agent]]
-        teammate = [p for p in self.game.players if p.team == player.team and p != player][0]
-        opponents = [p for p in self.game.players if p.team != player.team]
-        player_coords = np.array([player.rect.x, player.rect.y])
-        team_coords = np.array([teammate.rect.x, teammate.rect.y])
-        opponents_coords = np.array([[p.rect.x, p.rect.y] for p in opponents]).flatten()
-        ball_coords = np.array([self.game.ball.rect.x, self.game.ball.rect.y])
-        return {
-            "self": player_coords,
-            "team": team_coords,
-            "opponents": opponents_coords,
-            "ball": ball_coords,
-            "ball_speed": np.array([self.game.ball.x_speed, self.game.ball.y_speed]),
-        }
+        players = self.game.players
+        players_coords = []
+        for p in players:
+            players_coords += [p.rect.x, p.rect.y]
+        return players_coords + [self.game.ball.rect.x, self.game.ball.rect.y]
 
     def reset(self, seed=None, options=None):
         self.timestamp = 0
@@ -137,13 +128,7 @@ class footpong(ParallelEnv):
         # gymnasium spaces are defined and documented here: https://gymnasium.farama.org/api/spaces/
         # Dict containing team, opponent and ball coordinates (x, y) discrite values
         # Agent coords and other agent coords are in the game class
-        return gymnasium.spaces.Dict({
-            "self": gymnasium.spaces.Box(low=np.array([0, 0]), high=np.array([800, 600]), dtype=np.float32),
-            "team": gymnasium.spaces.Box(low=np.array([0, 0]), high=np.array([800, 600]), dtype=np.float32),
-            "opponents": gymnasium.spaces.Box(low=np.array([0, 0, 0, 0]), high=np.array([800, 600, 800, 600]), dtype=np.float32),
-            "ball": gymnasium.spaces.Box(low=np.array([0, 0]), high=np.array([800, 600]), dtype=np.float32),
-            "ball_speed": gymnasium.spaces.Box(low=-BALL_SPEED, high=BALL_SPEED, shape=(2,), dtype=np.float32),
-        })
+        return gymnasium.spaces.MultiDiscrete([800, 600]*5)
 
     # Action space should be defined here.
     # If your spaces change over time, remove this line (disable caching).
