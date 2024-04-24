@@ -75,17 +75,20 @@ if __name__ == "__main__":
                 actions = {f"player{i}": dqns[f"player{i}"].choose_action(observations[f"player{i}"]) for i in range(1, 5)}
 
             next_observations, rewards, terminations, truncations, infos = env.step(actions)
-            loss = 0
             for agent in env.agents:
-                loss += models[env.agent_name_mapping[agent]].learn(observations[agent], actions[agent], rewards[agent], terminations[agent] or truncations[agent], next_observations[agent])
-            print(f"Average Loss: {loss/len(env.agents)}")
-            observations = next_observations
+                if terminations[agent]:
+                    next_observations[agent] = None
+                else:
+                    next_observations[agent] = torch.tensor(next_observations[agent], dtype=torch.float32, device=device).unsqueeze(0)
+                dqns[agent].store_transition(observations[agent], actions[agent], rewards[agent], next_observations[agent], terminations[agent])
+                dqns[agent].learn()
+                observations[agent] = next_observations[agent]
+                dqns[agent].soft_update_target_model()
+                dqns[agent].decay_epsilon()
+            
             env.render()
-        for model in models:
-            model.decay_epsilon()
-        episodes -= 1
     
     if user_mode == NO_USER:
-        for model in models:
-            model.save_q_values()
+        for agent in env.agents:
+            dqns[agent].save_target()
     env.close()
