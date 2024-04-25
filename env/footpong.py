@@ -55,6 +55,7 @@ class footpong(ParallelEnv):
         self.action_spaces = {agent: self.action_space(agent) for agent in self.agents}
         self.timestamp = 0
         self.render_mode = render_mode
+        self.steps_stopped_ball = 0
  
     def observe(self, agent):
         players = self.game.players
@@ -71,6 +72,32 @@ class footpong(ParallelEnv):
         infos = {agent: {} for agent in self.agents}
 
         return observations, infos
+    
+    def custom_reward(self, rewards, old_observation, observation, actions):
+        if self.game.ball.x_speed == 0 and self.game.ball.y_speed == 0:
+            self.steps_stopped_ball += 1
+        else:
+            self.steps_stopped_ball = 0
+        c = 0
+        while c < len(self.agents):
+            agent = self.agents[c]
+            # check if the distance between the ball and the player decreased
+            old_distance = np.linalg.norm(np.array(old_observation[agent][-2:]) - np.array(old_observation[agent][2*c:2*(c+1)]))
+            new_distance = np.linalg.norm(np.array(observation[agent][-2:]) - np.array(observation[agent][2*c:2*(c+1)]))
+            # incentive_distance = max(10, 1000 / (1 + self.timestamp*0.0001))
+            # check if the ball is stopped for a long time
+            if new_distance <= old_distance and actions[agent] != DONT_MOVE:
+                # give reward to the player that got closer to the ball
+                # decrease the reward according to the epsilon 
+                rewards[agent] += 0.1 / max(1, (old_distance - new_distance))
+            else:
+                rewards[agent] += -0.001 * self.steps_stopped_ball
+            # round the rewards to 5 decimal places
+            if self.steps_stopped_ball > 1000:
+                rewards[agent] += -0.01 
+            rewards[agent] = round(rewards[agent], 5)
+            c += 1
+        return rewards
         
     def step(self, actions):
         # for all players do the respective action
@@ -90,22 +117,14 @@ class footpong(ParallelEnv):
         old_observation = {agent: self.observe(agent) for agent in self.agents}
         state = self.game.move()
         observation = {agent: self.observe(agent) for agent in self.agents}
-        # check if the distance between the ball and the player decreased
-        rewards = {agent: 1 if state == self.game.players[self.agent_name_mapping[agent]].team else -1 for agent in self.agents}
-        c = 0
-        while c < len(self.agents):
-            agent = self.agents[c]
-            print("check", old_observation[agent], observation[agent])
-            old_distance = np.linalg.norm(np.array(old_observation[agent][-2:]) - np.array(old_observation[agent][2*c:2*(c+1)]))
-            new_distance = np.linalg.norm(np.array(observation[agent][-2:]) - np.array(observation[agent][2*c:2*(c+1)]))
-            if new_distance < old_distance:
-                # give reward to the player that got closer to the ball
-                # decrease the reward according to the epsilon 
-                rewards[agent] = 0.1 / (1 + self.timestamp)
-                if rewards[agent] < 0.001:
-                    rewards[agent] = 0
-            c += 1
-                
+        rewards = {}
+        for agent in self.agents:
+            if f"team{state}" == self.game.players[self.agent_name_mapping[agent]].team:
+                rewards[agent] = 1
+            elif state != 0:
+                rewards[agent] = -1
+            else:
+                rewards[agent] = 0
         done = self.game.score[0] == MAX_SCORE or self.game.score[1] == MAX_SCORE
         terminations = {agent: done for agent in self.agents}
         truncations = {agent: self.timestamp > self.timestep_limit for agent in self.agents}
