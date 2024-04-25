@@ -37,8 +37,9 @@ if __name__ == "__main__":
         user_mode = TWO_USER
 
     clock = pygame.time.Clock()
-    episodes = 1000
+    episodes = 100000
     while episodes > 0:
+        episodes -= 1
         observations, _ = env.reset()
         observations ={agent: torch.tensor(observations[agent], dtype=torch.float32, device=device).unsqueeze(0) for agent in env.agents}
         while env.agents:
@@ -91,7 +92,7 @@ if __name__ == "__main__":
                 c += 1
             
             env.render()
-    
+
     if user_mode == NO_USER:
         for dqn in dqns:
             dqn.save_target()
