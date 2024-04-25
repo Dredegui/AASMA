@@ -32,7 +32,7 @@ class Game:
         # check left goal
         if self.ball.rect.x + self.ball.rect.width < 0:
             self.score_goal(1)
-            return 1
+            return 2
 
         # check right goal
         if self.ball.rect.x > SCREEN_WIDTH:
