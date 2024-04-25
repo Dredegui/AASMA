@@ -31,7 +31,7 @@ class Net(nn.Module):
         torch.save(self.state_dict(), path)
     
 class DQN():
-    def __init__(self, player, gamma=0.99, lr=0.001, epsilon=0.1, len_observation_space=5, len_action_space=5, device="cpu"):
+    def __init__(self, player, gamma=0.99, lr=0.001, epsilon=0.9, len_observation_space=10, len_action_space=5, device="cpu"):
         self.player = player
         self.path = f"models/{player}.pt"
         self.gamma = gamma
@@ -41,19 +41,19 @@ class DQN():
         self.len_action_space = len_action_space
         self.batch_size = 128 # TODO review this 
         self.device = device
-        self.model = Net().to(self.device)
-        self.target_model = Net().to(self.device)
+        self.model = Net(self.len_observation_space, self.len_action_space).to(self.device)
+        self.target_model = Net(self.len_observation_space, self.len_action_space).to(self.device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
         self.loss = nn.MSELoss()
         self.memory = deque(maxlen=10000)
 
-    def choose_action(self, state):
-        # print state shape
-        print(state.shape)
+    def choose_action(self, state, env):
+        print(self.epsilon)
         if np.random.rand() < self.epsilon:
-            return np.random.randint(self.len_action_space)
+            print("random")
+            return torch.tensor([[env.action_space(self.player).sample()]], device=self.device, dtype=torch.long)
         with torch.no_grad():
-            state = torch.tensor(state, dtype=torch.float32).to(self.device)
+            print("not random")
             action_value = self.model(state)
             return action_value.max(1).indices.view(1, 1)
     

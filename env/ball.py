@@ -13,8 +13,8 @@ class Ball:
     def move(self):
         total = abs(self.x_speed) + abs(self.y_speed)
         if total > 4:
-            self.x_speed = (self.x_speed / total) * (total - 1/10) 
-            self.y_speed = (self.y_speed / total) * (total - 1/10)
+            self.x_speed = (self.x_speed / total) * (total - 1/10 * 1/2) 
+            self.y_speed = (self.y_speed / total) * (total - 1/10 * 1/2)
         else:
             self.x_speed = 0
             self.y_speed = 0

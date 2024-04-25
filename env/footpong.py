@@ -87,9 +87,25 @@ class footpong(ParallelEnv):
             else:
                 player.stop()
 
+        old_observation = {agent: self.observe(agent) for agent in self.agents}
         state = self.game.move()
         observation = {agent: self.observe(agent) for agent in self.agents}
+        # check if the distance between the ball and the player decreased
         rewards = {agent: 1 if state == self.game.players[self.agent_name_mapping[agent]].team else -1 for agent in self.agents}
+        c = 0
+        while c < len(self.agents):
+            agent = self.agents[c]
+            print("check", old_observation[agent], observation[agent])
+            old_distance = np.linalg.norm(np.array(old_observation[agent][-2:]) - np.array(old_observation[agent][2*c:2*(c+1)]))
+            new_distance = np.linalg.norm(np.array(observation[agent][-2:]) - np.array(observation[agent][2*c:2*(c+1)]))
+            if new_distance < old_distance:
+                # give reward to the player that got closer to the ball
+                # decrease the reward according to the epsilon 
+                rewards[agent] = 0.1 / (1 + self.timestamp)
+                if rewards[agent] < 0.001:
+                    rewards[agent] = 0
+            c += 1
+                
         done = self.game.score[0] == MAX_SCORE or self.game.score[1] == MAX_SCORE
         terminations = {agent: done for agent in self.agents}
         truncations = {agent: self.timestamp > self.timestep_limit for agent in self.agents}

@@ -40,7 +40,7 @@ if __name__ == "__main__":
     episodes = 1000
     while episodes > 0:
         observations, _ = env.reset()
-        observations ={agent: torch.tensor(observations[agent], dtype=torch.float32, device=device).unsqueeze for agent in env.agents}
+        observations ={agent: torch.tensor(observations[agent], dtype=torch.float32, device=device).unsqueeze(0) for agent in env.agents}
         while env.agents:
             if user_mode:
                 actions = {}
@@ -72,23 +72,27 @@ if __name__ == "__main__":
                         actions[agent] = DONT_MOVE
                 clock.tick(30)
             else:
-                actions = {f"player{i}": dqns[f"player{i}"].choose_action(observations[f"player{i}"]) for i in range(1, 5)}
+                actions = {f"player{i}": dqns[i-1].choose_action(observations[f"player{i}"], env) for i in range(1, 5)}
 
             next_observations, rewards, terminations, truncations, infos = env.step(actions)
-            for agent in env.agents:
+            c = 0
+            while c < len(env.agents):
+                agent = env.agents[c]
+                rewards[agent] = torch.tensor([rewards[agent]], dtype=torch.float32, device=device)
                 if terminations[agent]:
                     next_observations[agent] = None
                 else:
                     next_observations[agent] = torch.tensor(next_observations[agent], dtype=torch.float32, device=device).unsqueeze(0)
-                dqns[agent].store_transition(observations[agent], actions[agent], rewards[agent], next_observations[agent], terminations[agent])
-                dqns[agent].learn()
+                dqns[c].push(observations[agent], actions[agent], next_observations[agent], rewards[agent])
+                dqns[c].learn()
                 observations[agent] = next_observations[agent]
-                dqns[agent].soft_update_target_model()
-                dqns[agent].decay_epsilon()
+                dqns[c].soft_update_target_model()
+                dqns[c].decay_epsilon()
+                c += 1
             
             env.render()
     
     if user_mode == NO_USER:
-        for agent in env.agents:
-            dqns[agent].save_target()
+        for dqn in dqns:
+            dqn.save_target()
     env.close()
