@@ -46,15 +46,13 @@ class Game:
 
     def check_goal(self):
         # check left goal
-        if self.ball.rect.x + self.ball.rect.width < 0:
+        if self.ball.rect.x + BALL_DIAMETER < 0:
             self.score_goal(1)
             return 2
-
         # check right goal
         if self.ball.rect.x > SCREEN_WIDTH:
             self.score_goal(0)
             return 1
-        
         return 0
 
     def score_goal(self, team: int):
@@ -67,30 +65,57 @@ class Game:
         self.ball.reset_position()
 
     def check_ball_bounce(self):
+        previous_y = self.ball.rect.y - self.ball.y_speed
+
         # check collision with left_top wall
-        if self.ball.rect.colliderect(self.walls["left_top"]):
-            self.ball.x_speed = -self.ball.x_speed
-            self.ball.rect.x = self.walls["left_top"].right
+        if self.ball.rect.x <= self.walls["left_top"].right and self.ball.rect.y <= self.walls["left_top"].bottom:
+            # check if the ball is moving towards the bottom side of the wall
+            if previous_y > self.walls["left_top"].bottom:
+                self.ball.y_speed = -self.ball.y_speed
+                self.ball.rect.y = self.walls["left_top"].bottom
+            else:
+                self.ball.x_speed = -self.ball.x_speed
+                self.ball.rect.x = self.walls["left_top"].right
+
         # check collision with left_bottom wall
-        if self.ball.rect.colliderect(self.walls["left_bottom"]):
-            self.ball.x_speed = -self.ball.x_speed
-            self.ball.rect.x = self.walls["left_bottom"].right
+        if self.ball.rect.x <= self.walls["left_bottom"].right and self.ball.rect.y >= self.walls["left_bottom"].top:
+            # check if the ball is moving towards the top side of the wall
+            if (previous_y + BALL_DIAMETER) < self.walls["left_bottom"].top:
+                self.ball.y_speed = -self.ball.y_speed
+                self.ball.rect.y = self.walls["left_bottom"].top - BALL_DIAMETER
+            else:
+                self.ball.x_speed = -self.ball.x_speed
+                self.ball.rect.x = self.walls["left_bottom"].right
+
         # check collision with right_top wall
-        if self.ball.rect.colliderect(self.walls["right_top"]):
-            self.ball.x_speed = -self.ball.x_speed
-            self.ball.rect.x = self.walls["right_top"].left - self.ball.rect.width
+        if (self.ball.rect.x + BALL_DIAMETER) >= self.walls["right_top"].left and self.ball.rect.y <= self.walls["right_top"].bottom:
+            # check if the ball is moving towards the bottom side of the wall
+            if previous_y > self.walls["right_top"].bottom:
+                self.ball.y_speed = -self.ball.y_speed
+                self.ball.rect.y = self.walls["right_top"].bottom
+            else:
+                self.ball.x_speed = -self.ball.x_speed
+                self.ball.rect.x = self.walls["right_top"].left - BALL_DIAMETER
+
         # check collision with right_bottom wall
-        if self.ball.rect.colliderect(self.walls["right_bottom"]):
-            self.ball.x_speed = -self.ball.x_speed
-            self.ball.rect.x = self.walls["right_bottom"].left - self.ball.rect.width
+        if (self.ball.rect.x + BALL_DIAMETER) >= self.walls["right_bottom"].left and self.ball.rect.y >= self.walls["right_bottom"].top:
+            # check if the ball is moving towards the top side of the wall
+            if (previous_y + BALL_DIAMETER) < self.walls["right_bottom"].top:
+                self.ball.y_speed = -self.ball.y_speed
+                self.ball.rect.y = self.walls["right_bottom"].top - BALL_DIAMETER
+            else:
+                self.ball.x_speed = -self.ball.x_speed
+                self.ball.rect.x = self.walls["right_bottom"].left - BALL_DIAMETER
+
         # check collision with top wall
         if self.ball.rect.y <= self.walls["top"].bottom:
             self.ball.y_speed = -self.ball.y_speed
             self.ball.rect.y = self.walls["top"].bottom
+
         # check collision with bottom wall
-        if (self.ball.rect.y + self.ball.rect.height) >= self.walls["bottom"].top:
+        if (self.ball.rect.y + BALL_DIAMETER) >= self.walls["bottom"].top:
             self.ball.y_speed = -self.ball.y_speed
-            self.ball.rect.y = self.walls["bottom"].top - self.ball.rect.height
+            self.ball.rect.y = self.walls["bottom"].top - BALL_DIAMETER
 
 
     def move(self):
