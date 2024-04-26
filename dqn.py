@@ -48,12 +48,9 @@ class DQN():
         self.memory = deque(maxlen=10000)
 
     def choose_action(self, state, env):
-        print(self.epsilon)
         if np.random.rand() < self.epsilon:
-            print("random")
             return torch.tensor([[env.action_space(self.player).sample()]], device=self.device, dtype=torch.long)
         with torch.no_grad():
-            print("not random")
             action_value = self.model(state)
             return action_value.max(1).indices.view(1, 1)
     
@@ -102,7 +99,7 @@ class DQN():
         self.target_model.load_state_dict(target_dict)
 
     def decay_epsilon(self):
-        self.epsilon = max(0.1, self.epsilon - 0.0001)
+        self.epsilon = max(0.1, self.epsilon - 0.01) # 0.0001
 
     def save_target(self):
         self.target_model.save(self.path)
