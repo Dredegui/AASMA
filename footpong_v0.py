@@ -21,7 +21,6 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 if __name__ == "__main__":
     env = env.footpong.footpong(render_mode="human")
-    env.reset()
     env.render()
     dqns = [DQN(f"player{i}", device=device) for i in range(1, 5)]
     # models = [q_learning(env, player=f"player{i}") for i in range(1, 5)]
@@ -37,11 +36,17 @@ if __name__ == "__main__":
         user_mode = TWO_USER
 
     clock = pygame.time.Clock()
-    episodes = 100000
+    episodes = 100
     while episodes > 0:
         episodes -= 1
-        observations, _ = env.reset()
+        # generate random seed if not first episode
+        if episodes < 100000:
+            seed = r.randint(0, 1000)
+        observations, _ = env.reset(seed=seed)
         observations ={agent: torch.tensor(observations[agent], dtype=torch.float32, device=device).unsqueeze(0) for agent in env.agents}
+        for dqn in dqns:
+            dqn.decay_epsilon()
+        print(dqns[0].epsilon)
         while env.agents:
             if user_mode:
                 actions = {}
@@ -74,23 +79,23 @@ if __name__ == "__main__":
                 clock.tick(30)
             else:
                 actions = {f"player{i}": dqns[i-1].choose_action(observations[f"player{i}"], env) for i in range(1, 5)}
+                #clock.tick(1000)
 
             next_observations, rewards, terminations, truncations, infos = env.step(actions)
-            c = 0
-            while c < len(env.agents):
-                agent = env.agents[c]
-                rewards[agent] = torch.tensor([rewards[agent]], dtype=torch.float32, device=device)
-                if terminations[agent]:
-                    next_observations[agent] = None
-                else:
-                    next_observations[agent] = torch.tensor(next_observations[agent], dtype=torch.float32, device=device).unsqueeze(0)
-                dqns[c].push(observations[agent], actions[agent], next_observations[agent], rewards[agent])
-                dqns[c].learn()
-                observations[agent] = next_observations[agent]
-                dqns[c].soft_update_target_model()
-                dqns[c].decay_epsilon()
-                c += 1
-            
+            if user_mode == NO_USER:
+                c = 0
+                while c < len(env.agents):
+                    agent = env.agents[c]
+                    rewards[agent] = torch.tensor([rewards[agent]], dtype=torch.float32, device=device)
+                    if terminations[agent] or truncations[agent]:
+                        next_observations[agent] = None
+                    else:
+                        next_observations[agent] = torch.tensor(next_observations[agent], dtype=torch.float32, device=device).unsqueeze(0)
+                    dqns[c].push(observations[agent], actions[agent], next_observations[agent], rewards[agent])
+                    dqns[c].learn()
+                    observations[agent] = next_observations[agent]
+                    dqns[c].soft_update_target_model()
+                    c += 1
             env.render()
 
     if user_mode == NO_USER:
