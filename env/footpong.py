@@ -44,7 +44,7 @@ class footpong(ParallelEnv):
         "render_modes": ["human", "rgb_array"],
     }
 
-    timestep_limit = 1_000_000
+    timestep_limit = 500 # 1_000_000 timesteps
 
     def __init__(self, render_mode=None):
         self.game = Game()
@@ -67,12 +67,13 @@ class footpong(ParallelEnv):
     def reset(self, seed=None, options=None):
         self.timestamp = 0
         self.agents = self.possible_agents[:]
-        self.game = Game()
+        self.game = Game(seed)
         observations = {agent: self.observe(agent) for agent in self.agents}
         infos = {agent: {} for agent in self.agents}
 
         return observations, infos
     
+    # Custom reward function (not used in the current implementation)
     def custom_reward(self, rewards, old_observation, observation, actions):
         if self.game.ball.x_speed == 0 and self.game.ball.y_speed == 0:
             self.steps_stopped_ball += 1
@@ -98,6 +99,28 @@ class footpong(ParallelEnv):
             rewards[agent] = round(rewards[agent], 5)
             c += 1
         return rewards
+    
+
+
+    def check_rewards(self, state, done, truncations):
+        rewards = {}
+        for agent in self.agents:
+            if f"team{state}" == self.game.players[self.agent_name_mapping[agent]].team:
+                rewards[agent] = 1
+                #if done:
+                #    rewards[agent] = 10
+            elif state != 0:
+                rewards[agent] = -1
+                #if done:
+                #    rewards[agent] = -10
+            else:
+                rewards[agent] = 0
+            # give reward if the player hit the ball
+            if self.game.last_player_ball_collision[self.agents.index(agent)]:
+                rewards[agent] += 1
+            #if all(truncations.values()):
+            #    rewards[agent] = -1
+        return rewards
         
     def step(self, actions):
         # for all players do the respective action
@@ -114,21 +137,14 @@ class footpong(ParallelEnv):
             else:
                 player.stop()
 
-        old_observation = {agent: self.observe(agent) for agent in self.agents}
         state = self.game.move()
         observation = {agent: self.observe(agent) for agent in self.agents}
-        rewards = {}
-        for agent in self.agents:
-            if f"team{state}" == self.game.players[self.agent_name_mapping[agent]].team:
-                rewards[agent] = 1
-            elif state != 0:
-                rewards[agent] = -1
-            else:
-                rewards[agent] = 0
+        if state != 0:
+            self.timestamp = 0
         done = self.game.score[0] == MAX_SCORE or self.game.score[1] == MAX_SCORE
         terminations = {agent: done for agent in self.agents}
         truncations = {agent: self.timestamp > self.timestep_limit for agent in self.agents}
-        
+        rewards = self.check_rewards(state, done, truncations)
         # When in human mode, check if user closed the window
         if self.render_mode == "human":
             for event in pygame.event.get():
