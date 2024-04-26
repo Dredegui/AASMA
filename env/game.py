@@ -1,20 +1,27 @@
 from .player import Player
 from .ball import Ball
 from .constants import *
+import numpy as np
 
 import pygame
 import cv2
 
 class Game:
-    def __init__(self):
+    def __init__(self, seed=None):
+        self.seed = seed
         start_padding = 200
-        self.players = [
-            Player("player1", start_padding, SCREEN_HEIGHT - (start_padding + PLAYER_HEIGHT), "team1", COLORS["red"]),
-            Player("player2", SCREEN_WIDTH - (start_padding + PLAYER_WIDTH), SCREEN_HEIGHT - (start_padding + PLAYER_HEIGHT), "team2", COLORS["green"]),
-            Player("player3", start_padding, start_padding, "team1", COLORS["red"]),
-            Player("player4", SCREEN_WIDTH - (start_padding + PLAYER_WIDTH), start_padding, "team2", COLORS["green"]),
-        ]
-        self.ball = Ball(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, BALL_RADIUS)
+        coords = [[start_padding, SCREEN_HEIGHT - (start_padding + PLAYER_HEIGHT)],
+                  [SCREEN_WIDTH - (start_padding + PLAYER_WIDTH), SCREEN_HEIGHT - (start_padding + PLAYER_HEIGHT)],
+                  [start_padding, start_padding],
+                  [SCREEN_WIDTH - (start_padding + PLAYER_WIDTH), start_padding],
+                  [SCREEN_WIDTH/2, SCREEN_HEIGHT/2]]
+        print(coords)
+        if seed is not None:
+            # generate random coordinates that are not too close to the walls or each other
+            coords = self.randomize_positions(coords, start_padding)
+        print(coords)
+        self.players = [Player(f"player{i+1}", coords[i][0], coords[i][1], f"team{i%2 + 1}", COLORS["red"] if i%2 == 0 else COLORS["green"]) for i in range(4)]
+        self.ball = Ball(coords[4][0], coords[4][1], BALL_RADIUS)
         self.walls = {
             "top": pygame.Rect(0, 0, SCREEN_WIDTH, BORDER_WIDTH),
             "bottom": pygame.Rect(0, SCREEN_HEIGHT - BORDER_WIDTH, SCREEN_WIDTH, BORDER_WIDTH),
@@ -24,9 +31,18 @@ class Game:
             "right_bottom": pygame.Rect(SCREEN_WIDTH - BORDER_WIDTH, SCREEN_HEIGHT/2 + GOAL_HEIGHT/2, BORDER_WIDTH, SCREEN_HEIGHT/2 - GOAL_HEIGHT/2),
         }
         self.score = [0, 0]
-        self.done = False
-        self.winner = None
+        self.last_player_ball_collision = {i: False for i in range(4)}
         self.screen = None
+
+    def randomize_positions(self, coords, start_padding=200):
+        for i in range(4):
+                x = np.random.randint(start_padding, SCREEN_WIDTH - start_padding - PLAYER_WIDTH)
+                y = np.random.randint(start_padding, SCREEN_HEIGHT - start_padding - PLAYER_HEIGHT)
+                while any([np.sqrt((x - c[0])**2 + (y - c[1])**2) < 2*PLAYER_WIDTH for c in coords]):
+                    x = np.random.randint(start_padding, SCREEN_WIDTH - start_padding - PLAYER_WIDTH)
+                    y = np.random.randint(start_padding, SCREEN_HEIGHT - start_padding - PLAYER_HEIGHT)
+                coords[i] = [x, y]
+        return coords
 
     def check_goal(self):
         # check left goal
@@ -82,14 +98,18 @@ class Game:
         for i, player in enumerate(self.players):
             # check player collisions with walls and other players
             player.move()
-            if player.rect.collidelist(self.players[:i] + self.players[i+1:]) != -1 or player.rect.collidelist(list(self.walls.values())) != -1 \
-            or player.rect.x < 0 or player.rect.x + player.rect.width > SCREEN_WIDTH:
+            if player.rect.collidelist(self.players[:i] + self.players[i+1:]) != -1 \
+                    or player.rect.collidelist(list(self.walls.values())) != -1 \
+                    or player.rect.x < 0 or player.rect.x + player.rect.width > SCREEN_WIDTH:
                 player.undo()
             # check player collisions with ball
             if player.rect.colliderect(self.ball.rect):
+                self.last_player_ball_collision[i] = True
                 self.ball.x_speed = ((self.ball.rect.centerx - self.ball.x_speed) - (self.players[i].rect.centerx - self.players[i].x_speed))
                 self.ball.y_speed = ((self.ball.rect.centery - self.ball.y_speed) - (self.players[i].rect.centery - self.players[i].y_speed))
                 self.ball.normalize_speed()
+            else:
+                self.last_player_ball_collision[i] = False
         # check ball collisions with goal and walls
         self.ball.move()
         state = self.check_goal()
