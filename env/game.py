@@ -25,10 +25,10 @@ class Game:
         self.walls = {
             "top": pygame.Rect(0, 0, SCREEN_WIDTH, BORDER_WIDTH),
             "bottom": pygame.Rect(0, SCREEN_HEIGHT - BORDER_WIDTH, SCREEN_WIDTH, BORDER_WIDTH),
-            "left_top": pygame.Rect(0, 0, BORDER_WIDTH, SCREEN_HEIGHT/2 - GOAL_HEIGHT/2),
-            "left_bottom": pygame.Rect(0, SCREEN_HEIGHT/2 + GOAL_HEIGHT/2, BORDER_WIDTH, SCREEN_HEIGHT/2 - GOAL_HEIGHT/2),
-            "right_top": pygame.Rect(SCREEN_WIDTH - BORDER_WIDTH, 0, BORDER_WIDTH, SCREEN_HEIGHT/2 - GOAL_HEIGHT/2),
-            "right_bottom": pygame.Rect(SCREEN_WIDTH - BORDER_WIDTH, SCREEN_HEIGHT/2 + GOAL_HEIGHT/2, BORDER_WIDTH, SCREEN_HEIGHT/2 - GOAL_HEIGHT/2),
+            "left_top": pygame.Rect(0, 0, BORDER_WIDTH, GOAL_TOP),
+            "left_bottom": pygame.Rect(0, GOAL_BOTTOM, BORDER_WIDTH, GOAL_TOP),
+            "right_top": pygame.Rect(SCREEN_WIDTH - BORDER_WIDTH, 0, BORDER_WIDTH, GOAL_TOP),
+            "right_bottom": pygame.Rect(SCREEN_WIDTH - BORDER_WIDTH, GOAL_BOTTOM, BORDER_WIDTH, GOAL_TOP),
         }
         self.score = [0, 0]
         self.last_player_ball_collision = {i: False for i in range(4)}
@@ -65,12 +65,19 @@ class Game:
         self.ball.reset_position()
 
     def check_ball_bounce(self):
-        previous_y = self.ball.rect.y - self.ball.y_speed
+        ball_above_goal = True if self.ball.rect.y <= GOAL_TOP else False
+        ball_bellow_goal = True if self.ball.rect.y + BALL_DIAMETER >= GOAL_BOTTOM else False
+        ball_beyond_left_border = True if self.ball.rect.x <= BORDER_WIDTH else False
+        ball_beyond_right_border = True if self.ball.rect.x + BALL_DIAMETER >= SCREEN_WIDTH - BORDER_WIDTH else False
+        # if the ball in its previous position was between the goals and in the current
+        # position touches a side wall, then it should bounce vertically and not horizontally
+        previous_y = self.ball.rect.centery - self.ball.y_speed
+        vertical_bounce = True if previous_y > GOAL_TOP and previous_y < GOAL_BOTTOM else False
 
         # check collision with left_top wall
-        if self.ball.rect.x <= self.walls["left_top"].right and self.ball.rect.y <= self.walls["left_top"].bottom:
+        if ball_beyond_left_border and ball_above_goal:
             # check if the ball is moving towards the bottom side of the wall
-            if previous_y > self.walls["left_top"].bottom:
+            if vertical_bounce:
                 self.ball.y_speed = -self.ball.y_speed
                 self.ball.rect.y = self.walls["left_top"].bottom
             else:
@@ -78,9 +85,9 @@ class Game:
                 self.ball.rect.x = self.walls["left_top"].right
 
         # check collision with left_bottom wall
-        if self.ball.rect.x <= self.walls["left_bottom"].right and self.ball.rect.y >= self.walls["left_bottom"].top:
+        if ball_beyond_left_border and ball_bellow_goal:
             # check if the ball is moving towards the top side of the wall
-            if (previous_y + BALL_DIAMETER) < self.walls["left_bottom"].top:
+            if vertical_bounce:
                 self.ball.y_speed = -self.ball.y_speed
                 self.ball.rect.y = self.walls["left_bottom"].top - BALL_DIAMETER
             else:
@@ -88,9 +95,9 @@ class Game:
                 self.ball.rect.x = self.walls["left_bottom"].right
 
         # check collision with right_top wall
-        if (self.ball.rect.x + BALL_DIAMETER) >= self.walls["right_top"].left and self.ball.rect.y <= self.walls["right_top"].bottom:
+        if ball_beyond_right_border and ball_above_goal:
             # check if the ball is moving towards the bottom side of the wall
-            if previous_y > self.walls["right_top"].bottom:
+            if vertical_bounce:
                 self.ball.y_speed = -self.ball.y_speed
                 self.ball.rect.y = self.walls["right_top"].bottom
             else:
@@ -98,9 +105,9 @@ class Game:
                 self.ball.rect.x = self.walls["right_top"].left - BALL_DIAMETER
 
         # check collision with right_bottom wall
-        if (self.ball.rect.x + BALL_DIAMETER) >= self.walls["right_bottom"].left and self.ball.rect.y >= self.walls["right_bottom"].top:
+        if ball_beyond_right_border and ball_bellow_goal:
             # check if the ball is moving towards the top side of the wall
-            if (previous_y + BALL_DIAMETER) < self.walls["right_bottom"].top:
+            if vertical_bounce:
                 self.ball.y_speed = -self.ball.y_speed
                 self.ball.rect.y = self.walls["right_bottom"].top - BALL_DIAMETER
             else:
