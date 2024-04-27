@@ -2,16 +2,13 @@ import env.footpong
 from env.constants import *
 from time import sleep
 from sys import argv
-import math
-import random
-import numpy as np
 import torch
 import matplotlib
 import matplotlib.pyplot as plt
 from dqn import DQN
-from itertools import count
 import random as r
 import pygame
+from plotter import plot
 
 is_ipython = 'inline' in matplotlib.get_backend()
 if is_ipython:
@@ -36,11 +33,17 @@ if __name__ == "__main__":
         user_mode = TWO_USER
 
     clock = pygame.time.Clock()
-    episodes = 100
-    while episodes > 0:
-        episodes -= 1
+    episodes = 0
+    plot_scores = []
+    plot_mean_scores = []
+    record = 0
+    score = 0
+    total_score = 0
+    while episodes < 2000:
+        episodes += 1
         # generate random seed if not first episode
-        if episodes < 100000:
+        seed = None
+        if episodes > 1:
             seed = r.randint(0, 1000)
         observations, _ = env.reset(seed=seed)
         observations ={agent: torch.tensor(observations[agent], dtype=torch.float32, device=device).unsqueeze(0) for agent in env.agents}
@@ -84,11 +87,20 @@ if __name__ == "__main__":
             next_observations, rewards, terminations, truncations, infos = env.step(actions)
             if user_mode == NO_USER:
                 c = 0
-                while c < len(env.agents):
-                    agent = env.agents[c]
+                while c < len(rewards.keys()): # for agent in env.agents:
+                    agent = f"player{c+1}"
                     rewards[agent] = torch.tensor([rewards[agent]], dtype=torch.float32, device=device)
                     if terminations[agent] or truncations[agent]:
                         next_observations[agent] = None
+                        if agent == "player1":
+                            score = env.game.score[0]
+                            if score >= record:
+                                record = score
+                            total_score += score
+                            plot_scores.append(score)
+                            mean_score = total_score / episodes
+                            plot_mean_scores.append(mean_score)
+                            plot(plot_scores, plot_mean_scores)
                     else:
                         next_observations[agent] = torch.tensor(next_observations[agent], dtype=torch.float32, device=device).unsqueeze(0)
                     dqns[c].push(observations[agent], actions[agent], next_observations[agent], rewards[agent])
@@ -97,7 +109,7 @@ if __name__ == "__main__":
                     dqns[c].soft_update_target_model()
                     c += 1
             env.render()
-
+            
     if user_mode == NO_USER:
         for dqn in dqns:
             dqn.save_target()
