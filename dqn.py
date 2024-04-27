@@ -4,7 +4,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import random
 import numpy as np
-import gymnasium as gym
+import os
 from collections import namedtuple, deque
 
 
@@ -12,26 +12,37 @@ Transition = namedtuple('Transition',
                         ('state', 'action', 'next_state', 'reward'))
 
 class Net(nn.Module):
-    def __init__(self, input_size, output_size, hidden_size=128, ):
+    def __init__(self, input_size, output_size, hidden_size=128):
         super(Net, self).__init__()
         self.fc1 = nn.Linear(input_size, hidden_size)
         nn.init.normal_(self.fc1.weight, mean=0., std=0.1)
         self.fc2 = nn.Linear(hidden_size, hidden_size)
         nn.init.normal_(self.fc2.weight, mean=0., std=0.1)
+        self.fc3 = nn.Linear(hidden_size, hidden_size)
+        nn.init.normal_(self.fc3.weight, mean=0., std=0.1)
+        self.fc4 = nn.Linear(hidden_size, hidden_size)
+        nn.init.normal_(self.fc4.weight, mean=0., std=0.1)
         self.out = nn.Linear(hidden_size, output_size)
         nn.init.normal_(self.out.weight, mean=0., std=0.1)
+
 
     def forward(self, state):
         state = F.relu(self.fc1(state))
         state = F.relu(self.fc2(state))
+        state = F.relu(self.fc3(state))
+        state = F.relu(self.fc4(state))
         state = self.out(state)
         return state
     
     def save(self, path):
         torch.save(self.state_dict(), path)
+
+    def load(self, path):
+        if os.path.exists(path):
+            self.load_state_dict(torch.load(path))
     
 class DQN():
-    def __init__(self, player, gamma=0.99, lr=0.001, epsilon=0.9, len_observation_space=10, len_action_space=5, device="cpu"):
+    def __init__(self, player, gamma=0.90, lr=0.003, epsilon=0.9, len_observation_space=10, len_action_space=5, device="cpu"):
         self.player = player
         self.path = f"models/{player}.pt"
         self.gamma = gamma
@@ -42,7 +53,9 @@ class DQN():
         self.batch_size = 128 # TODO review this 
         self.device = device
         self.model = Net(self.len_observation_space, self.len_action_space).to(self.device)
+        self.model.load(self.path)
         self.target_model = Net(self.len_observation_space, self.len_action_space).to(self.device)
+        self.target_model.load(self.path)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
         self.loss = nn.MSELoss()
         self.memory = deque(maxlen=10000)
