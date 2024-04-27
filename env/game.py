@@ -7,9 +7,9 @@ import pygame
 import cv2
 
 class Game:
-    def __init__(self, seed=None):
+    def __init__(self, seed=None, padding=200):
         self.seed = seed
-        start_padding = 100
+        start_padding = padding
         coords = [[start_padding, SCREEN_HEIGHT - (start_padding + PLAYER_HEIGHT)],
                   [SCREEN_WIDTH - (start_padding + PLAYER_WIDTH), SCREEN_HEIGHT - (start_padding + PLAYER_HEIGHT)],
                   [start_padding, start_padding],
