@@ -9,6 +9,7 @@ from dqn import DQN
 import random as r
 import pygame
 from plotter import plot
+import time
 
 is_ipython = 'inline' in matplotlib.get_backend()
 if is_ipython:
@@ -20,8 +21,6 @@ if __name__ == "__main__":
     env = env.footpong.footpong(render_mode="human")
     env.render()
     dqns = [DQN(f"player{i}", device=device) for i in range(1, 5)]
-    # models = [q_learning(env, player=f"player{i}") for i in range(1, 5)]
-
     user_mode = NO_USER
     if len(argv) == 2 and argv[1] in ['1', '2', '3', '4']:
         print(f"User mode on!\nUse arrow keys to move player {argv[1]}")
@@ -39,7 +38,12 @@ if __name__ == "__main__":
     record = 0
     score = 0
     total_score = 0
-    while episodes < 2000:
+    padding = 200
+    old_t = time.time()
+    while episodes < 100:
+        t = time.time()
+        print(f"Time: {t - old_t}")
+        old_t = t
         episodes += 1
         # generate random seed if not first episode
         seed = None
@@ -92,6 +96,7 @@ if __name__ == "__main__":
                     rewards[agent] = torch.tensor([rewards[agent]], dtype=torch.float32, device=device)
                     if terminations[agent] or truncations[agent]:
                         next_observations[agent] = None
+                        """
                         if agent == "player1":
                             score = env.game.score[0]
                             if score >= record:
@@ -101,6 +106,7 @@ if __name__ == "__main__":
                             mean_score = total_score / episodes
                             plot_mean_scores.append(mean_score)
                             plot(plot_scores, plot_mean_scores)
+                        """
                     else:
                         next_observations[agent] = torch.tensor(next_observations[agent], dtype=torch.float32, device=device).unsqueeze(0)
                     dqns[c].push(observations[agent], actions[agent], next_observations[agent], rewards[agent])
@@ -108,7 +114,9 @@ if __name__ == "__main__":
                     observations[agent] = next_observations[agent]
                     dqns[c].soft_update_target_model()
                     c += 1
-            env.render()
+                env.render()
+            else:
+                env.render()
             
     if user_mode == NO_USER:
         for dqn in dqns:
