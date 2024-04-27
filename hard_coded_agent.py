@@ -10,25 +10,24 @@ class hard_coded_agent():
 			return DONT_MOVE
 		ball = observation[-2:]
 		player = observation[player*2:player*2+2]
-		print(player, ball)
-		if player[0] < ball[0]: # x_player is to the left of x_ball
-			if player[1]-ball[1] < BALL_DIAMETER: # y_player is close to y_ball
+		if player[0] + PLAYER_WIDTH < ball[0]: # x_player is to the left of x_ball
+			if abs(player[1]-ball[1]) < BALL_DIAMETER: # y_player is close to y_ball
 				return MOVE_RIGHT
 			elif player[1] < ball[1]: # player is above the ball
 				return MOVE_DOWN
 			else:
 				return MOVE_UP
-		elif player[0] > ball[0]: # x_pkayer is to the right of x_ball
-			if player[1]-ball[1] < BALL_DIAMETER:
+		else: # x_pkayer is to the right of x_ball
+			if abs(player[1]-ball[1]) < BALL_DIAMETER:
 				# if player is close to upper wall move down
-				if player[1] < 4* PLAYER_HEIGHT:
-					return MOVE_DOWN
-				else: # else move up
+				if player[1] < ball[1]:
 					return MOVE_UP
+				else: # else move up
+					return MOVE_DOWN
 			else:
 				return MOVE_LEFT
-		return DONT_MOVE
 
+	# TODO rework this function
 	def choose_action_right_team(self, observation, player):
 		if observation is None:
 			return DONT_MOVE

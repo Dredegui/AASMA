@@ -15,11 +15,9 @@ class Game:
                   [start_padding, start_padding],
                   [SCREEN_WIDTH - (start_padding + PLAYER_WIDTH), start_padding],
                   [SCREEN_WIDTH/2, SCREEN_HEIGHT/2]]
-        print(coords)
         if seed is not None:
             # generate random coordinates that are not too close to the walls or each other
             coords = self.randomize_positions(coords, start_padding)
-        print(coords)
         self.players = [Player(f"player{i+1}", coords[i][0], coords[i][1], f"team{i%2 + 1}", COLORS["red"] if i%2 == 0 else COLORS["green"]) for i in range(4)]
         self.ball = Ball(coords[4][0], coords[4][1], BALL_RADIUS)
         self.walls = {

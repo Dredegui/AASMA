@@ -91,7 +91,6 @@ if __name__ == "__main__":
                 actions = {f"player{i}": dqns[i-1].choose_action(observations[f"player{i}"], env) for i in range(1, 5)}
                 # switch player1 actions with hard coded agent
                 actions["player1"] = hagent.choose_action(observations["player1"], 0)
-                print(actions)
                 #clock.tick(1000)
 
             next_observations, rewards, terminations, truncations, infos = env.step(actions)
