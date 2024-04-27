@@ -12,25 +12,22 @@ Transition = namedtuple('Transition',
                         ('state', 'action', 'next_state', 'reward'))
 
 class Net(nn.Module):
-    def __init__(self, input_size, output_size, hidden_size=128):
+    def __init__(self, input_size, output_size, hidden_size=128, hidden_layers=4):
         super(Net, self).__init__()
-        self.fc1 = nn.Linear(input_size, hidden_size)
-        nn.init.normal_(self.fc1.weight, mean=0., std=0.1)
-        self.fc2 = nn.Linear(hidden_size, hidden_size)
-        nn.init.normal_(self.fc2.weight, mean=0., std=0.1)
-        self.fc3 = nn.Linear(hidden_size, hidden_size)
-        nn.init.normal_(self.fc3.weight, mean=0., std=0.1)
-        self.fc4 = nn.Linear(hidden_size, hidden_size)
-        nn.init.normal_(self.fc4.weight, mean=0., std=0.1)
+        self.fcs = []
+        for i in range(hidden_layers):
+            if i == 0:
+                self.fcs.append(nn.Linear(input_size, hidden_size))
+            else:
+                self.fcs.append(nn.Linear(hidden_size, hidden_size))
+            nn.init.normal_(self.fcs[0].weight, mean=0., std=0.1)
         self.out = nn.Linear(hidden_size, output_size)
-        nn.init.normal_(self.out.weight, mean=0., std=0.1)
+        #nn.init.normal_(self.out.weight, mean=0., std=0.1)
 
 
     def forward(self, state):
-        state = F.relu(self.fc1(state))
-        state = F.relu(self.fc2(state))
-        state = F.relu(self.fc3(state))
-        state = F.relu(self.fc4(state))
+        for fc in self.fcs:
+            state = F.relu(fc(state))
         state = self.out(state)
         return state
     
@@ -50,7 +47,7 @@ class DQN():
         self.epsilon = epsilon
         self.len_observation_space = len_observation_space
         self.len_action_space = len_action_space
-        self.batch_size = 128 # TODO review this 
+        self.batch_size = 256 # TODO review this 
         self.device = device
         self.model = Net(self.len_observation_space, self.len_action_space).to(self.device)
         self.model.load(self.path)
@@ -59,6 +56,9 @@ class DQN():
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
         self.loss = nn.MSELoss()
         self.memory = deque(maxlen=10000)
+
+    def check_device(self):
+        print(self.device)
 
     def choose_action(self, state, env):
         if np.random.rand() < self.epsilon:
@@ -78,7 +78,7 @@ class DQN():
         batch = Transition(*zip(*transitions))
         non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.next_state)), device=self.device, dtype=torch.bool)
         non_final_next_states = torch.cat([s for s in batch.next_state if s is not None])
-        # TODO is this necessary?
+
         state_batch = torch.cat(batch.state)
         action_batch = torch.cat(batch.action)
         reward_batch = torch.cat(batch.reward)
@@ -93,7 +93,6 @@ class DQN():
         # Compute Huber loss
         criterion = nn.SmoothL1Loss()
         loss = criterion(state_action_values, expected_state_action_values.unsqueeze(1))
-
         # Optimize the model
         self.optimizer.zero_grad()
         loss.backward()
