@@ -10,12 +10,14 @@ import random as r
 import pygame
 from plotter import plot
 import time
+from hard_coded_agent import hard_coded_agent
 
 is_ipython = 'inline' in matplotlib.get_backend()
 if is_ipython:
     from IPython import display
 plt.ion()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(device)
 
 if __name__ == "__main__":
     env = env.footpong.footpong(render_mode="human")
@@ -40,6 +42,7 @@ if __name__ == "__main__":
     total_score = 0
     padding = 200
     old_t = time.time()
+    hagent = hard_coded_agent()
     while episodes < 100:
         t = time.time()
         print(f"Time: {t - old_t}")
@@ -86,6 +89,9 @@ if __name__ == "__main__":
                 clock.tick(30)
             else:
                 actions = {f"player{i}": dqns[i-1].choose_action(observations[f"player{i}"], env) for i in range(1, 5)}
+                # switch player1 actions with hard coded agent
+                actions["player1"] = hagent.choose_action(observations["player1"], 0)
+                print(actions)
                 #clock.tick(1000)
 
             next_observations, rewards, terminations, truncations, infos = env.step(actions)
