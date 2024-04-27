@@ -44,7 +44,7 @@ class footpong(ParallelEnv):
         "render_modes": ["human", "rgb_array"],
     }
 
-    timestep_limit = 500 # 1_000_000 timesteps
+    timestep_limit = 300 # 1_000_000 timesteps
 
     def __init__(self, render_mode=None):
         self.game = Game()
@@ -117,7 +117,7 @@ class footpong(ParallelEnv):
                 rewards[agent] = 0
             # give reward if the player hit the ball
             if self.game.last_player_ball_collision[self.agents.index(agent)]:
-                rewards[agent] += 1
+                rewards[agent] += 0.1
             #if all(truncations.values()):
             #    rewards[agent] = -1
         return rewards
