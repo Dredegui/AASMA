@@ -9,7 +9,7 @@ import cv2
 class Game:
     def __init__(self, seed=None):
         self.seed = seed
-        start_padding = 200
+        start_padding = 100
         coords = [[start_padding, SCREEN_HEIGHT - (start_padding + PLAYER_HEIGHT)],
                   [SCREEN_WIDTH - (start_padding + PLAYER_WIDTH), SCREEN_HEIGHT - (start_padding + PLAYER_HEIGHT)],
                   [start_padding, start_padding],
@@ -35,7 +35,7 @@ class Game:
         self.screen = None
 
     def randomize_positions(self, coords, start_padding=200):
-        for i in range(4):
+        for i in range(5):
                 x = np.random.randint(start_padding, SCREEN_WIDTH - start_padding - PLAYER_WIDTH)
                 y = np.random.randint(start_padding, SCREEN_HEIGHT - start_padding - PLAYER_HEIGHT)
                 while any([np.sqrt((x - c[0])**2 + (y - c[1])**2) < 2*PLAYER_WIDTH for c in coords]):
