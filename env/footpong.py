@@ -64,10 +64,10 @@ class footpong(ParallelEnv):
             players_coords += [p.rect.x, p.rect.y]
         return players_coords + [self.game.ball.rect.x, self.game.ball.rect.y]
 
-    def reset(self, seed=None, options=None):
+    def reset(self, seed=None, options=None, padding=200):
         self.timestamp = 0
         self.agents = self.possible_agents[:]
-        self.game = Game(seed)
+        self.game = Game(seed=seed, padding=padding)
         observations = {agent: self.observe(agent) for agent in self.agents}
         infos = {agent: {} for agent in self.agents}
 
@@ -138,12 +138,18 @@ class footpong(ParallelEnv):
                 player.stop()
 
         state = self.game.move()
-        observation = {agent: self.observe(agent) for agent in self.agents}
         if state != 0:
             self.timestamp = 0
         done = self.game.score[0] == MAX_SCORE or self.game.score[1] == MAX_SCORE
-        terminations = {agent: done for agent in self.agents}
-        truncations = {agent: self.timestamp > self.timestep_limit for agent in self.agents}
+        observation = {}
+        terminations = {}
+        truncations = {}
+        infos = {}
+        for agent in self.agents:
+            observation.update({agent: self.observe(agent)})
+            terminations.update({agent: done})
+            truncations.update({agent: self.timestamp > self.timestep_limit})
+            infos.update({agent: {}})
         rewards = self.check_rewards(state, done, truncations)
         # When in human mode, check if user closed the window
         if self.render_mode == "human":
@@ -152,8 +158,6 @@ class footpong(ParallelEnv):
                     truncations = {agent: True for agent in self.agents}
 
         self.timestamp += 1
-        infos = {agent: {} for agent in self.agents}
-
         if any(terminations.values()) or all(truncations.values()):
             self.agents = []
         
