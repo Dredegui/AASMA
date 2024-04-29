@@ -10,7 +10,7 @@ class hard_coded_agent():
 			return DONT_MOVE
 		ball = observation[-2:]
 		player = observation[player*2:player*2+2]
-		if player[0] + PLAYER_WIDTH < ball[0]: # x_player is to the left of x_ball
+		if player[0] + PLAYER_WIDTH <= ball[0]: # x_player is to the left of x_ball
 			if abs(player[1]-ball[1]) < BALL_DIAMETER: # y_player is close to y_ball
 				return MOVE_RIGHT
 			elif player[1] < ball[1]: # player is above the ball
