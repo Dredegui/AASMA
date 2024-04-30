@@ -7,19 +7,21 @@ import pygame
 import cv2
 
 class Game:
-    def __init__(self, seed=None, padding=200):
+    def __init__(self, seed=None, padding=200, n_players=4):
         self.seed = seed
         start_padding = padding
+        self.n_players = n_players
         coords = [[start_padding, SCREEN_HEIGHT - (start_padding + PLAYER_HEIGHT)],
                   [SCREEN_WIDTH - (start_padding + PLAYER_WIDTH), SCREEN_HEIGHT - (start_padding + PLAYER_HEIGHT)],
                   [start_padding, start_padding],
                   [SCREEN_WIDTH - (start_padding + PLAYER_WIDTH), start_padding],
                   [SCREEN_WIDTH/2, SCREEN_HEIGHT/2]]
+        coords = coords[:n_players * 2] + [[SCREEN_WIDTH/2, SCREEN_HEIGHT/2]]
         if seed is not None:
             # generate random coordinates that are not too close to the walls or each other
             coords = self.randomize_positions(coords, start_padding)
-        self.players = [Player(f"player{i+1}", coords[i][0], coords[i][1], f"team{i%2 + 1}", COLORS["red"] if i%2 == 0 else COLORS["green"]) for i in range(4)]
-        self.ball = Ball(coords[4][0], coords[4][1], BALL_RADIUS)
+        self.players = [Player(f"player{i+1}", coords[i][0], coords[i][1], f"team{i%2 + 1}", COLORS["red"] if i%2 == 0 else COLORS["green"]) for i in range(self.n_players)]
+        self.ball = Ball(coords[n_players][0], coords[n_players][1], BALL_RADIUS)
         self.walls = {
             "top": pygame.Rect(0, 0, SCREEN_WIDTH, BORDER_WIDTH),
             "bottom": pygame.Rect(0, SCREEN_HEIGHT - BORDER_WIDTH, SCREEN_WIDTH, BORDER_WIDTH),
@@ -29,11 +31,11 @@ class Game:
             "right_bottom": pygame.Rect(SCREEN_WIDTH - BORDER_WIDTH, GOAL_BOTTOM, BORDER_WIDTH, GOAL_TOP),
         }
         self.score = [0, 0]
-        self.last_player_ball_collision = {i: False for i in range(4)}
+        self.last_player_ball_collision = {i: False for i in range(self.n_players)}
         self.screen = None
 
     def randomize_positions(self, coords, start_padding=200):
-        for i in range(5):
+        for i in range(self.n_players + 1): # +1 for the ball
                 x = np.random.randint(start_padding, SCREEN_WIDTH - start_padding - PLAYER_WIDTH)
                 y = np.random.randint(start_padding, SCREEN_HEIGHT - start_padding - PLAYER_HEIGHT)
                 while any([np.sqrt((x - c[0])**2 + (y - c[1])**2) < 2*PLAYER_WIDTH for c in coords]):

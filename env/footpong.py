@@ -44,10 +44,10 @@ class footpong(ParallelEnv):
         "render_modes": ["human", "rgb_array"],
     }
 
-    timestep_limit = 300 # 1_000_000 timesteps
+    timestep_limit = 10_000 # 1_000_000 timesteps
 
     def __init__(self, render_mode=None):
-        self.game = Game()
+        self.game = Game(n_players=1)
         self.possible_agents = [p.name for p in self.game.players]
         self.agents = self.possible_agents[:]
         self.agent_name_mapping = {p.name: i for i, p in enumerate(self.game.players)}
@@ -67,27 +67,40 @@ class footpong(ParallelEnv):
     def reset(self, seed=None, options=None, padding=200):
         self.timestamp = 0
         self.agents = self.possible_agents[:]
-        self.game = Game(seed=seed, padding=padding)
+        self.game = Game(seed=seed, padding=padding, n_players=self.game.n_players)
         observations = {agent: self.observe(agent) for agent in self.agents}
         infos = {agent: {} for agent in self.agents}
 
         return observations, infos
     
     # Custom reward function (not used in the current implementation)
-    def custom_reward(self, rewards, old_observation, observation, actions):
+    def custom_reward(self, rewards, observation, actions, old_observation=None):
+        """
         if self.game.ball.x_speed == 0 and self.game.ball.y_speed == 0:
             self.steps_stopped_ball += 1
         else:
             self.steps_stopped_ball = 0
+        """
         c = 0
         while c < len(self.agents):
             agent = self.agents[c]
             # check if the distance between the ball and the player decreased
             old_distance = np.linalg.norm(np.array(old_observation[agent][-2:]) - np.array(old_observation[agent][2*c:2*(c+1)]))
             new_distance = np.linalg.norm(np.array(observation[agent][-2:]) - np.array(observation[agent][2*c:2*(c+1)]))
-            # incentive_distance = max(10, 1000 / (1 + self.timestamp*0.0001))
+            if self.game.last_player_ball_collision[c]:
+                rewards[agent] += 5
+            if new_distance < old_distance and actions[agent] != DONT_MOVE:
+                rewards[agent] += np.exp(-0.5 * new_distance) * 10_000 + 0.1
+            else:
+                rewards[agent] -= 0.1
+            
+            if rewards[agent] > 0.3:
+                print(f"Calculating reward for agent {agent}: {rewards[agent]}")
+            """
+            if new_distance != 0:
+                rewards[agent] += np.exp(-0.5 * new_distance) * 1_000
             # check if the ball is stopped for a long time
-            if new_distance <= old_distance and actions[agent] != DONT_MOVE:
+            if new_distance < old_distance and actions[agent] != DONT_MOVE:
                 # give reward to the player that got closer to the ball
                 # decrease the reward according to the epsilon 
                 rewards[agent] += 0.1 / max(1, (old_distance - new_distance))
@@ -97,6 +110,7 @@ class footpong(ParallelEnv):
             if self.steps_stopped_ball > 1000:
                 rewards[agent] += -0.01 
             rewards[agent] = round(rewards[agent], 5)
+            """
             c += 1
         return rewards
     
@@ -106,19 +120,15 @@ class footpong(ParallelEnv):
         rewards = {}
         for agent in self.agents:
             if f"team{state}" == self.game.players[self.agent_name_mapping[agent]].team:
-                rewards[agent] = 1
-                #if done:
-                #    rewards[agent] = 10
+                rewards[agent] = 0
             elif state != 0:
-                rewards[agent] = -1
-                #if done:
-                #    rewards[agent] = -10
+                rewards[agent] = 0
             else:
                 rewards[agent] = 0
             # give reward if the player hit the ball
             if self.game.last_player_ball_collision[self.agents.index(agent)]:
                 rewards[agent] += 0.1
-            #if all(truncations.values()):
+            # if all(truncations.values()):
             #    rewards[agent] = -1
         return rewards
         
@@ -137,6 +147,7 @@ class footpong(ParallelEnv):
             else:
                 player.stop()
 
+        old_observation = {agent: self.observe(agent) for agent in self.agents}
         state = self.game.move()
         if state != 0:
             self.timestamp = 0
@@ -151,6 +162,7 @@ class footpong(ParallelEnv):
             truncations.update({agent: self.timestamp > self.timestep_limit})
             infos.update({agent: {}})
         rewards = self.check_rewards(state, done, truncations)
+        rewards = self.custom_reward(rewards, observation, actions, old_observation)
         # When in human mode, check if user closed the window
         if self.render_mode == "human":
             for event in pygame.event.get():
@@ -183,7 +195,7 @@ class footpong(ParallelEnv):
         # gymnasium spaces are defined and documented here: https://gymnasium.farama.org/api/spaces/
         # Dict containing team, opponent and ball coordinates (x, y) discrite values
         # Agent coords and other agent coords are in the game class
-        return gymnasium.spaces.MultiDiscrete([800, 600]*5)
+        return gymnasium.spaces.MultiDiscrete([800, 600]*(self.game.n_players + 1))
 
     # Action space should be defined here.
     # If your spaces change over time, remove this line (disable caching).
