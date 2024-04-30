@@ -22,7 +22,8 @@ print(device)
 if __name__ == "__main__":
     env = env.footpong.footpong(render_mode="human")
     env.render()
-    dqns = [DQN(f"player{i}", device=device) for i in range(1, 5)]
+    n_agents = env.game.n_players
+    dqns = [DQN(f"player{i}", len_observation_space=(n_agents + 1)*2, device=device) for i in range(1, n_agents + 1)]
     user_mode = NO_USER
     if len(argv) == 2 and argv[1] in ['1', '2', '3', '4']:
         print(f"User mode on!\nUse arrow keys to move player {argv[1]}")
@@ -43,7 +44,7 @@ if __name__ == "__main__":
     padding = 200
     old_t = time.time()
     hagent = hard_coded_agent(device=device)
-    while episodes < 100:
+    while episodes < 200:
         t = time.time()
         print(f"Time: {t - old_t}")
         old_t = t
@@ -88,16 +89,15 @@ if __name__ == "__main__":
                         actions[agent] = DONT_MOVE
                 clock.tick(30)
             else:
-                actions = {f"player{i}": dqns[i-1].choose_action(observations[f"player{i}"], env) for i in range(1, 5)}
-                # switch player1 actions with hard coded agent
-                if r.random() < 0.5:
-                    actions["player3"] = hagent.choose_action(observations["player3"], 2)
-                #clock.tick(1000)
+                actions = {f"player{i}": dqns[i-1].choose_action(observations[f"player{i}"], env) for i in range(1, n_agents + 1)}
+                # uncomment the following line to use hard coded agent for player3
+                # actions["player3"] = hagent.choose_action(observations["player3"], 2)
+                # clock.tick(1000)
 
             next_observations, rewards, terminations, truncations, infos = env.step(actions)
             if user_mode == NO_USER:
                 c = 0
-                while c < len(rewards.keys()): # for agent in env.agents:
+                while c < n_agents: # for agent in env.agents:
                     agent = f"player{c+1}"
                     rewards[agent] = torch.tensor([rewards[agent]], dtype=torch.float32, device=device)
                     if terminations[agent] or truncations[agent]:
