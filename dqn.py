@@ -12,36 +12,39 @@ Transition = namedtuple('Transition',
                         ('state', 'action', 'next_state', 'reward'))
 
 class Net(nn.Module):
-    def __init__(self, input_size, output_size, hidden_size=128, hidden_layers=4, device="cpu"):
+    def __init__(self, input_size, output_size, hidden_size=128, hidden_layers=3, device="cpu"):
         super(Net, self).__init__()
-        self.fcs = nn.ModuleList()
-        for i in range(hidden_layers):
-            if i == 0:
-                self.fcs.append(nn.Linear(input_size, hidden_size))
-            else:
-                self.fcs.append(nn.Linear(hidden_size, hidden_size))
-            nn.init.normal_(self.fcs[0].weight, mean=0., std=0.1)
-        self.out = nn.Linear(hidden_size, output_size)
+        self.fc1 = nn.Linear(input_size, hidden_size)
+        nn.init.normal_(self.fc1.weight, mean=0., std=0.1)
+        self.fc2 = nn.Linear(hidden_size, 64)
+        nn.init.normal_(self.fc2.weight, mean=0., std=0.1)
+        self.fc3 = nn.Linear(64, 32)
+        nn.init.normal_(self.fc3.weight, mean=0., std=0.1)
+        self.out = nn.Linear(32, output_size)
+        nn.init.normal_(self.out.weight, mean=0., std=0.1)
         self.to(device)
-        #nn.init.normal_(self.out.weight, mean=0., std=0.1)
 
 
     def forward(self, state):
-        for fc in self.fcs:
-            state = F.relu(fc(state))
+        state = F.relu(self.fc1(state))
+        state = F.relu(self.fc2(state))
+        state = F.relu(self.fc3(state))
         state = self.out(state)
         return state
     
     def save(self, path):
+        if not os.path.exists("models"):
+            os.makedirs("models")
         torch.save(self.state_dict(), path)
 
     def load(self, path, device):
         if os.path.exists(path):
+            print(f"Loading model from {path}")
             self.load_state_dict(torch.load(path))
             self.to(device)
     
 class DQN():
-    def __init__(self, player, gamma=0.90, lr=0.003, epsilon=0.9, len_observation_space=10, len_action_space=5, device="cpu"):
+    def __init__(self, player, gamma=0.99, lr=0.001, epsilon=0.9, len_observation_space=10, len_action_space=5, device="cpu"):
         self.player = player
         self.path = f"models/{player}.pt"
         self.gamma = gamma
@@ -113,7 +116,7 @@ class DQN():
         self.target_model.load_state_dict(target_dict)
 
     def decay_epsilon(self):
-        self.epsilon = max(0.1, self.epsilon - 0.01) # 0.0001
+        self.epsilon = max(0.1, self.epsilon - 0.005) # 0.0001
 
     def save_target(self):
         self.target_model.save(self.path)
