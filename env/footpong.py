@@ -74,7 +74,7 @@ class footpong(ParallelEnv):
         return observations, infos
     
     # Custom reward function (not used in the current implementation)
-    def custom_reward(self, rewards, observation, actions, old_observation=None):
+    def custom_reward(self, rewards, observation, actions, old_observation=None, old_score=None):
         """
         if self.game.ball.x_speed == 0 and self.game.ball.y_speed == 0:
             self.steps_stopped_ball += 1
@@ -88,7 +88,9 @@ class footpong(ParallelEnv):
             old_distance = np.linalg.norm(np.array(old_observation[agent][-2:]) - np.array(old_observation[agent][2*c:2*(c+1)]))
             new_distance = np.linalg.norm(np.array(observation[agent][-2:]) - np.array(observation[agent][2*c:2*(c+1)]))
             if self.game.last_player_ball_collision[c]:
-                rewards[agent] += 5
+                rewards[agent] += 20
+
+            # TRAIN THE AGENT TO HIT THE BALL
             if new_distance < old_distance and actions[agent] != DONT_MOVE:
                 rewards[agent] += np.exp(-0.5 * new_distance) * 10_000 + 0.1
             else:
@@ -148,6 +150,7 @@ class footpong(ParallelEnv):
                 player.stop()
 
         old_observation = {agent: self.observe(agent) for agent in self.agents}
+        old_score = self.game.score[:]
         state = self.game.move()
         if state != 0:
             self.timestamp = 0
@@ -162,7 +165,7 @@ class footpong(ParallelEnv):
             truncations.update({agent: self.timestamp > self.timestep_limit})
             infos.update({agent: {}})
         rewards = self.check_rewards(state, done, truncations)
-        rewards = self.custom_reward(rewards, observation, actions, old_observation)
+        rewards = self.custom_reward(rewards, observation, actions, old_observation, old_score=old_score)
         # When in human mode, check if user closed the window
         if self.render_mode == "human":
             for event in pygame.event.get():

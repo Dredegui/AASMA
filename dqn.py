@@ -26,6 +26,10 @@ class Net(nn.Module):
 
 
     def forward(self, state):
+        # normalize the state
+        state[:, 0::2] /= 800
+        state[:, 1::2] /= 600
+
         state = F.relu(self.fc1(state))
         state = F.relu(self.fc2(state))
         state = F.relu(self.fc3(state))
@@ -44,7 +48,7 @@ class Net(nn.Module):
             self.to(device)
     
 class DQN():
-    def __init__(self, player, gamma=0.99, lr=0.001, epsilon=0.9, len_observation_space=10, len_action_space=5, device="cpu"):
+    def __init__(self, player, gamma=0.995, lr=0.001, epsilon=0.9, len_observation_space=10, len_action_space=5, device="cpu"):
         self.player = player
         self.path = f"models/{player}.pt"
         self.gamma = gamma

@@ -20,7 +20,7 @@ class Game:
         if seed is not None:
             # generate random coordinates that are not too close to the walls or each other
             coords = self.randomize_positions(coords, start_padding)
-        self.players = [Player(f"player{i+1}", coords[i][0], coords[i][1], f"team{i%2 + 1}", COLORS["red"] if i%2 == 0 else COLORS["green"]) for i in range(self.n_players)]
+        self.players = [Player(f"player{i+1}", coords[i][0], coords[i][1], PLAYER_TEAM_LEFT if i%2 == 0 else PLAYER_TEAM_RIGHT, COLORS["red"] if i%2 == 0 else COLORS["green"]) for i in range(self.n_players)]
         self.ball = Ball(coords[n_players][0], coords[n_players][1], BALL_RADIUS)
         self.walls = {
             "top": pygame.Rect(0, 0, SCREEN_WIDTH, BORDER_WIDTH),
@@ -47,18 +47,18 @@ class Game:
     def check_goal(self):
         # check left goal
         if self.ball.rect.x + BALL_DIAMETER < 0:
-            self.score_goal(1)
+            self.score_goal(PLAYER_TEAM_RIGHT)
             return 2
         # check right goal
         if self.ball.rect.x > SCREEN_WIDTH:
-            self.score_goal(0)
+            self.score_goal(PLAYER_TEAM_LEFT)
             return 1
         return 0
 
     def score_goal(self, team: int):
         # update score
         self.score[team] += 1
-        print(f"Goal scored: {self.score[0]} - {self.score[1]}")
+        print(f"Goal scored: {self.score[PLAYER_TEAM_LEFT]} - {self.score[PLAYER_TEAM_RIGHT]}")
         # reset ball and player positions
         for player in self.players:
             player.reset_position()
