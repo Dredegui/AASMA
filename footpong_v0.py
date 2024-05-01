@@ -10,6 +10,8 @@ import random as r
 import pygame
 from plotter import plot
 import time
+import os
+import signal
 from hard_coded_agent import hard_coded_agent
 
 is_ipython = 'inline' in matplotlib.get_backend()
@@ -19,7 +21,20 @@ plt.ion()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 
+def save_model(dqns):
+    for dqn in dqns:
+        dqn.save_target()
+
+# trap sigint
+def signal_handler(sig, frame):
+    print("Exiting...")
+    save_model(dqns)
+    pygame.quit()
+    exit(0)
+
 if __name__ == "__main__":
+    os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (100,100)
+    signal.signal(signal.SIGINT, signal_handler)
     env = env.footpong.footpong(render_mode="human")
     env.render()
     n_agents = env.game.n_players
@@ -46,7 +61,7 @@ if __name__ == "__main__":
     hagent = hard_coded_agent(device=device)
     while episodes < 200:
         t = time.time()
-        print(f"Time: {t - old_t}")
+        print(f"Time: {t - old_t}, episode: {episodes}")
         old_t = t
         episodes += 1
         # generate random seed if not first episode
@@ -125,6 +140,5 @@ if __name__ == "__main__":
                 env.render()
             
     if user_mode == NO_USER:
-        for dqn in dqns:
-            dqn.save_target()
+        save_model(dqns)
     env.close()
