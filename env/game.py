@@ -7,7 +7,7 @@ import pygame
 import cv2
 
 class Game:
-    def __init__(self, seed=None, padding=200, n_players=4):
+    def __init__(self, seed=None, padding=50, n_players=4):
         self.seed = seed
         start_padding = padding
         self.n_players = n_players
@@ -33,6 +33,7 @@ class Game:
         self.score = [0, 0]
         self.last_player_ball_collision = {i: False for i in range(self.n_players)}
         self.screen = None
+        self.n_touches = 0
 
     def randomize_positions(self, coords, start_padding=200):
         for i in range(self.n_players + 1): # +1 for the ball
@@ -48,12 +49,12 @@ class Game:
         # check left goal
         if self.ball.rect.x + BALL_DIAMETER < 0:
             self.score_goal(PLAYER_TEAM_RIGHT)
-            return 2
+            return PLAYER_TEAM_RIGHT
         # check right goal
         if self.ball.rect.x > SCREEN_WIDTH:
             self.score_goal(PLAYER_TEAM_LEFT)
-            return 1
-        return 0
+            return PLAYER_TEAM_LEFT
+        return None
 
     def score_goal(self, team: int):
         # update score
@@ -136,6 +137,7 @@ class Game:
                 player.undo()
             # check player collisions with ball
             if player.rect.colliderect(self.ball.rect):
+                self.n_touches += 1
                 self.last_player_ball_collision[i] = True
                 self.ball.x_speed = ((self.ball.rect.centerx - self.ball.x_speed) - (self.players[i].rect.centerx - self.players[i].x_speed))
                 self.ball.y_speed = ((self.ball.rect.centery - self.ball.y_speed) - (self.players[i].rect.centery - self.players[i].y_speed))
@@ -145,7 +147,7 @@ class Game:
         # check ball collisions with goal and walls
         self.ball.move()
         state = self.check_goal()
-        if state == 0:
+        if state is None:
             self.check_ball_bounce()
         return state
 

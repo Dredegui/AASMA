@@ -38,13 +38,30 @@ def raw_env(render_mode=None):
     env = parallel_to_aec(env)
     return env
 
+def check_collision_route_with_goal(game):
+    ball = game.ball
+    if ball.x_speed < 0:
+        # check collision with left goal
+        nsteps = int(abs(ball.rect.left / ball.x_speed))
+        ypredicted = ball.rect.top + nsteps * ball.y_speed
+        if ypredicted > GOAL_TOP and ypredicted < GOAL_BOTTOM:
+            return PLAYER_TEAM_LEFT
+    elif ball.x_speed > 0:
+        # check collision with right goal
+        nsteps = int(abs((SCREEN_WIDTH - ball.rect.right) / ball.x_speed))
+        ypredicted = ball.rect.top + nsteps * ball.y_speed
+        if ypredicted > GOAL_TOP and ypredicted < GOAL_BOTTOM:
+            return PLAYER_TEAM_RIGHT
+    return None
+
+
 class footpong(ParallelEnv):
     metadata = {
         "name": "foot_pong_v0",
         "render_modes": ["human", "rgb_array"],
     }
 
-    timestep_limit = 10_000 # 1_000_000 timesteps
+    timestep_limit = 1_000 # 1_000_000 timesteps
 
     def __init__(self, render_mode=None):
         self.game = Game(n_players=1)
@@ -89,6 +106,13 @@ class footpong(ParallelEnv):
             new_distance = np.linalg.norm(np.array(observation[agent][-2:]) - np.array(observation[agent][2*c:2*(c+1)]))
             if self.game.last_player_ball_collision[c]:
                 rewards[agent] += 20
+                will_collide = check_collision_route_with_goal(self.game)
+                if will_collide is not None:
+                    print(f"Will collide: {will_collide}")
+                    if will_collide == self.game.players[c].team:
+                        rewards[agent] -= 50
+                    else:
+                        rewards[agent] += 50
 
             # TRAIN THE AGENT TO HIT THE BALL
             if new_distance < old_distance and actions[agent] != DONT_MOVE:
@@ -120,16 +144,13 @@ class footpong(ParallelEnv):
 
     def check_rewards(self, state, done, truncations):
         rewards = {}
-        for agent in self.agents:
-            if f"team{state}" == self.game.players[self.agent_name_mapping[agent]].team:
+        for i, agent in enumerate(self.agents):
+            if state is None:
                 rewards[agent] = 0
-            elif state != 0:
-                rewards[agent] = 0
+            elif state == self.game.players[i].team:
+                rewards[agent] = 100
             else:
-                rewards[agent] = 0
-            # give reward if the player hit the ball
-            if self.game.last_player_ball_collision[self.agents.index(agent)]:
-                rewards[agent] += 0.1
+                rewards[agent] = -100
             # if all(truncations.values()):
             #    rewards[agent] = -1
         return rewards
@@ -152,9 +173,13 @@ class footpong(ParallelEnv):
         old_observation = {agent: self.observe(agent) for agent in self.agents}
         old_score = self.game.score[:]
         state = self.game.move()
-        if state != 0:
+        if state is not None:
             self.timestamp = 0
         done = self.game.score[0] == MAX_SCORE or self.game.score[1] == MAX_SCORE
+        # stop the game after 5 touches
+        # done = False
+        # if self.game.n_touches > 4:
+        #     done = True
         observation = {}
         terminations = {}
         truncations = {}
