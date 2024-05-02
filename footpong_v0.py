@@ -28,7 +28,8 @@ def save_model(dqns):
 # trap sigint
 def signal_handler(sig, frame):
     print("Exiting...")
-    save_model(dqns)
+    if input("Do you want to save the model? [y/N]").lower() == "y":
+        save_model(dqns)
     pygame.quit()
     exit(0)
 
@@ -59,7 +60,7 @@ if __name__ == "__main__":
     padding = 200
     old_t = time.time()
     hagent = hard_coded_agent(device=device)
-    while episodes < 200:
+    while episodes < 500:
         t = time.time()
         print(f"Time: {t - old_t}, episode: {episodes}")
         old_t = t
