@@ -50,7 +50,7 @@ class Net(nn.Module):
             self.to(device)
     
 class DQN():
-    def __init__(self, player, gamma=0.995, lr=0.001, epsilon=0.1, len_observation_space=10, len_action_space=5, device="cpu"):
+    def __init__(self, player, gamma=0.995, lr=0.001, epsilon=0.9, len_observation_space=10, len_action_space=5, device="cpu"):
         self.player = player
         self.path = f"models/{player}.pt"
         self.gamma = gamma
