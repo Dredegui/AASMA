@@ -28,7 +28,7 @@ class Net(nn.Module):
     def forward(self, state):
         # normalize the state
         # shallow copy the state
-        sc_state = state
+        sc_state = state.clone()
         sc_state[:, 0::2] /= 800
         sc_state[:, 1::2] /= 600
 
