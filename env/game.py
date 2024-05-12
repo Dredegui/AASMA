@@ -7,7 +7,7 @@ import pygame
 import cv2
 
 class Game:
-    def __init__(self, seed=None, padding=50, n_players=4):
+    def __init__(self, seed=None, padding=200, n_players=4):
         self.seed = seed
         start_padding = padding
         self.n_players = n_players
@@ -36,13 +36,11 @@ class Game:
         self.n_touches = 0
 
     def randomize_positions(self, coords, start_padding=200):
-        for i in range(self.n_players + 1): # +1 for the ball
-                x = np.random.randint(start_padding, SCREEN_WIDTH - start_padding - PLAYER_WIDTH)
-                y = np.random.randint(start_padding, SCREEN_HEIGHT - start_padding - PLAYER_HEIGHT)
-                while any([np.sqrt((x - c[0])**2 + (y - c[1])**2) < 2*PLAYER_WIDTH for c in coords]):
-                    x = np.random.randint(start_padding, SCREEN_WIDTH - start_padding - PLAYER_WIDTH)
-                    y = np.random.randint(start_padding, SCREEN_HEIGHT - start_padding - PLAYER_HEIGHT)
-                coords[i] = [x, y]
+        for i in range(self.n_players): # +1 for the ball
+            x = np.random.randint(coords[i][0] - start_padding, coords[i][0] + start_padding)
+            y = np.random.randint(coords[i][1] - start_padding, coords[i][1] + start_padding)
+            coords[i] = [x, y]
+
         return coords
 
     def check_goal(self):
