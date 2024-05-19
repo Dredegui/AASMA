@@ -1,9 +1,11 @@
 from agents.agent import Agent
 from env.constants import *
+import torch
 
 class HardCodedAgent(Agent):
-	def __init__(self, name, agent_id):
+	def __init__(self, name, agent_id, device=None):
 		super().__init__(name, agent_id)
+		self.device = device
 
 	def _choose_action_left_team(self, observation):
 		if observation is None:
@@ -50,7 +52,13 @@ class HardCodedAgent(Agent):
 	
 	def act(self, observation):
 		if self.agent_id == 1 or self.agent_id == 3:
-			return self._choose_action_left_team(observation)
+			action = self._choose_action_left_team(observation)
+			if self.device is not None:
+				return torch.tensor(action, dtype=torch.float32, device=self.device)
+			return action
 		else:
-			return self._choose_action_right_team(observation)
+			action = self._choose_action_right_team(observation)
+			if self.device is not None:
+				return torch.tensor(action, dtype=torch.float32, device=self.device)
+			return action
 			

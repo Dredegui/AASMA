@@ -12,6 +12,7 @@ from plotter import plot
 import time
 import os
 import signal
+from agents.hard_coded_agent import HardCodedAgent
 
 is_ipython = 'inline' in matplotlib.get_backend()
 if is_ipython:
@@ -58,7 +59,7 @@ if __name__ == "__main__":
     total_score = 0
     padding = 200
     old_t = time.time()
-    hagent = hard_coded_agent(device=device)
+    # hagent = HardCodedAgent(device=device)
     while episodes < 500:
         t = time.time()
         print(f"Time: {t - old_t}, episode: {episodes}")
