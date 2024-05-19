@@ -16,7 +16,7 @@ class Game:
                   [start_padding, start_padding],
                   [SCREEN_WIDTH - (start_padding + PLAYER_WIDTH), start_padding],
                   [SCREEN_WIDTH/2, SCREEN_HEIGHT/2]]
-        coords = coords[:n_players * 2] + [[SCREEN_WIDTH/2, SCREEN_HEIGHT/2]]
+        coords = coords[: n_players] + [[SCREEN_WIDTH/2, SCREEN_HEIGHT/2]]
         if seed is not None:
             # generate random coordinates that are not too close to the walls or each other
             coords = self.randomize_positions(coords, start_padding)
