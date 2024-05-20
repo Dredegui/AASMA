@@ -73,7 +73,7 @@ class DQN():
     def check_device(self):
         print(self.device)
 
-    def choose_action(self, state, env):
+    def act(self, state, env):
         if np.random.rand() < self.epsilon:
             return torch.tensor([[env.action_space(self.player).sample()]], device=self.device, dtype=torch.long)
         with torch.no_grad():
