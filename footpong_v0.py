@@ -1,18 +1,19 @@
 import env.footpong
 from env.constants import *
-from time import sleep
 from sys import argv
+from dqn import DQN
+from plotter import plot
+from game_statistics import GameStatistics
+from agents.hard_coded_agent import HardCodedAgent
+
 import torch
 import matplotlib
 import matplotlib.pyplot as plt
-from dqn import DQN
 import random as r
 import pygame
-from plotter import plot
 import time
 import os
 import signal
-from agents.hard_coded_agent import HardCodedAgent
 
 is_ipython = 'inline' in matplotlib.get_backend()
 if is_ipython:
@@ -36,8 +37,13 @@ def signal_handler(sig, frame):
 if __name__ == "__main__":
     os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (100,100)
     signal.signal(signal.SIGINT, signal_handler)
+
     env = env.footpong.footpong(render_mode="human")
     env.render()
+
+    statistics = GameStatistics(env.agents)
+    env.game.set_statistics(statistics)
+
     n_agents = env.game.n_players
     dqns = [DQN(f"player{i}", len_observation_space=(n_agents + 1)*2, device=device) for i in range(1, n_agents + 1)]
     user_mode = NO_USER
@@ -63,13 +69,14 @@ if __name__ == "__main__":
     while episodes < 500:
         t = time.time()
         print(f"Time: {t - old_t}, episode: {episodes}")
+        print(f"Statistics:\n{statistics}")
         old_t = t
         episodes += 1
         # generate random seed if not first episode
         seed = None
         if episodes > 1:
             seed = r.randint(0, 1000)
-        observations, _ = env.reset(seed=seed)
+        observations, _ = env.reset(seed=seed, statistics=statistics)
         observations ={agent: torch.tensor(observations[agent], dtype=torch.float32, device=device).unsqueeze(0) for agent in env.agents}
         for dqn in dqns:
             dqn.decay_epsilon()

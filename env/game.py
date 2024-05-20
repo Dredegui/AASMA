@@ -7,10 +7,11 @@ import pygame
 import cv2
 
 class Game:
-    def __init__(self, seed=None, padding=200, n_players=4):
+    def __init__(self, seed=None, padding=200, n_players=4, statistics=None):
         self.seed = seed
         start_padding = padding
         self.n_players = n_players
+        self.statistics = statistics
         coords = [[start_padding, SCREEN_HEIGHT - (start_padding + PLAYER_HEIGHT)],
                   [SCREEN_WIDTH - (start_padding + PLAYER_WIDTH), SCREEN_HEIGHT - (start_padding + PLAYER_HEIGHT)],
                   [start_padding, start_padding],
@@ -34,6 +35,9 @@ class Game:
         self.last_player_ball_collision = {i: False for i in range(self.n_players)}
         self.screen = None
         self.n_touches = 0
+
+    def set_statistics(self, statistics):
+        self.statistics = statistics
 
     def randomize_positions(self, coords, start_padding=200):
         for i in range(self.n_players): # +1 for the ball
@@ -123,7 +127,6 @@ class Game:
             self.ball.y_speed = -self.ball.y_speed
             self.ball.rect.y = self.walls["bottom"].top - BALL_DIAMETER
 
-
     def move(self):
         # move, check collisions and reverse invalid moves
         for i, player in enumerate(self.players):
@@ -140,6 +143,10 @@ class Game:
                 self.ball.x_speed = ((self.ball.rect.centerx - self.ball.x_speed) - (self.players[i].rect.centerx - self.players[i].x_speed))
                 self.ball.y_speed = ((self.ball.rect.centery - self.ball.y_speed) - (self.players[i].rect.centery - self.players[i].y_speed))
                 self.ball.normalize_speed()
+                # update ball touch statistics
+                if self.statistics is not None:
+                    # FIXME: some ball touches are counted twice
+                    self.statistics.update_ball_touches(self.players[i].name)
             else:
                 self.last_player_ball_collision[i] = False
         # check ball collisions with goal and walls
@@ -180,4 +187,3 @@ class Game:
             array = cv2.rotate(array, cv2.ROTATE_90_CLOCKWISE)
             array = cv2.flip(array, 1)
             return array
-

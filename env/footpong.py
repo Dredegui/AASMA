@@ -81,10 +81,10 @@ class footpong(ParallelEnv):
             players_coords += [p.rect.x, p.rect.y]
         return players_coords + [self.game.ball.rect.x, self.game.ball.rect.y]
 
-    def reset(self, seed=None, options=None, padding=200):
+    def reset(self, seed=None, options=None, padding=200, statistics=None):
         self.timestamp = 0
         self.agents = self.possible_agents[:]
-        self.game = Game(seed=seed, padding=padding, n_players=self.game.n_players)
+        self.game = Game(seed=seed, padding=padding, n_players=self.game.n_players, statistics=statistics)
         observations = {agent: self.observe(agent) for agent in self.agents}
         infos = {agent: {} for agent in self.agents}
 
@@ -205,7 +205,7 @@ class footpong(ParallelEnv):
 
     def close(self):
         pygame.quit()
-        
+
     def render(self):
         if self.render_mode is None:
             gymnasium.logger.warn(

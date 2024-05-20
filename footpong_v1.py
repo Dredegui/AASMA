@@ -7,11 +7,16 @@ from agents.random_agent import RandomAgent
 from agents.hard_coded_agent import HardCodedAgent
 from agents.goal_keeper_agent import GoalKeeperAgent
 from agents.role_agent import RoleAgent
+from game_statistics import GameStatistics
 
 if __name__ == "__main__":
     env = env.footpong.footpong(render_mode="human")
     env.render()
-    observations, _ = env.reset(seed=42)
+
+    statistics = GameStatistics(env.agents)
+    env.game.set_statistics(statistics)
+
+    observations, _ = env.reset(seed=42, statistics=statistics)
 
     roles = {
         "defender": GoalKeeperAgent,
@@ -32,5 +37,8 @@ if __name__ == "__main__":
 
         observations, rewards, terminations, truncations, infos = env.step(actions)
         env.render()
-    
+
+    if statistics is not None:
+        statistics.print_statistics()
+
     env.close()
