@@ -5,6 +5,7 @@ import torch.nn.functional as F
 import random
 import numpy as np
 import os
+from env.constants import *
 from collections import namedtuple, deque
 
 
@@ -29,9 +30,10 @@ class Net(nn.Module):
         # normalize the state
         # shallow copy the state
         sc_state = state.clone()
-        sc_state[:, 0::2] /= 800
-        sc_state[:, 1::2] /= 600
-
+        sc_state[:, 0::2] = sc_state[:, 0::2] / BALL_DIAMETER
+        sc_state[:, 1::2] = sc_state[:, 1::2] / BALL_DIAMETER
+        sc_state = sc_state.int()
+        sc_state = sc_state.float()
         sc_state = F.relu(self.fc1(sc_state))
         sc_state = F.relu(self.fc2(sc_state))
         sc_state = F.relu(self.fc3(sc_state))
