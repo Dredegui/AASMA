@@ -1,6 +1,7 @@
 from .player import Player
 from .ball import Ball
 from .constants import *
+from fifo_queue import Fifo
 import numpy as np
 
 import pygame
@@ -33,6 +34,7 @@ class Game:
         }
         self.score = [0, 0]
         self.last_player_ball_collision = {i: False for i in range(self.n_players)}
+        self.ball_touches_fifo = Fifo(2)
         self.screen = None
         self.n_touches = 0
 
@@ -44,21 +46,86 @@ class Game:
             x = np.random.randint(coords[i][0] - start_padding, coords[i][0] + start_padding)
             y = np.random.randint(coords[i][1] - start_padding, coords[i][1] + start_padding)
             coords[i] = [x, y]
-
         return coords
+
+    # update goal, own goal, and assist statistics
+    def update_goal_related_statistics(self, team_that_scored: int):
+        if self.statistics is not None:
+            last_player = self.ball_touches_fifo.get_first()
+            if last_player is not None:
+                # check if the player scored an own goal
+                if last_player.team == team_that_scored:
+                    self.statistics.update_goals(last_player.name)
+                else:
+                    self.statistics.update_own_goals(last_player.name)
+            previous_player = self.ball_touches_fifo.get_last_in_max_size()
+            if previous_player is not None:
+                # check if the player assisted the goal
+                if previous_player.team == team_that_scored and previous_player.name != last_player.name and previous_player.team == last_player.team:
+                    self.statistics.update_assists(previous_player.name)
+
+    def update_ball_touch_statistics(self, player: Player):
+        if self.statistics is not None:
+            # FIXME: some ball touches are counted twice
+            self.statistics.update_ball_touches(player.name)
+    
+    def update_shot_statistics(self):
+        if self.statistics is not None:
+            will_score = self.check_collision_route_with_goal()
+            last_player = self.ball_touches_fifo.get_first()
+            if will_score is not None and last_player is not None and abs(will_score - last_player.team) == 1:
+                self.statistics.update_shots(last_player.name)
+
+    def update_direct_shot_statistics(self, player: Player):
+        if self.statistics is not None:
+            will_score = self.check_collision_route_with_goal()
+            if will_score is not None and abs(will_score - player.team) == 1:
+                self.statistics.update_direct_shots(player.name)
+                self.statistics.update_shots(player.name)
+        
+    def update_save_statistics(self, player: Player):
+        if self.statistics is not None:
+            will_score = self.check_collision_route_with_goal()
+            prev_player = self.ball_touches_fifo.get_last_in_max_size()
+            if not (player.team == PLAYER_TEAM_LEFT and player.rect.x + PLAYER_WIDTH < SCREEN_WIDTH/4 \
+                     or player.team == PLAYER_TEAM_RIGHT and player.rect.x > SCREEN_WIDTH - SCREEN_WIDTH/4):
+                if prev_player is not None and prev_player.team != player.team and will_score == player.team:
+                    self.statistics.update_blocked_shots(player.name)
+                return
+            if will_score == player.team:
+                self.statistics.update_saves(player.name)
+
+    def check_collision_route_with_goal(self):
+        ball = self.ball
+        if ball.x_speed < 0:
+            # check collision with left goal
+            nsteps = int(abs(ball.rect.left / ball.x_speed))
+            ypredicted = ball.rect.top + nsteps * ball.y_speed
+            if ypredicted > GOAL_TOP and ypredicted < GOAL_BOTTOM:
+                return PLAYER_TEAM_LEFT
+        elif ball.x_speed > 0:
+            # check collision with right goal
+            nsteps = int(abs((SCREEN_WIDTH - ball.rect.right) / ball.x_speed))
+            ypredicted = ball.rect.top + nsteps * ball.y_speed
+            if ypredicted > GOAL_TOP and ypredicted < GOAL_BOTTOM:
+                return PLAYER_TEAM_RIGHT
+        return None
 
     def check_goal(self):
         # check left goal
         if self.ball.rect.x + BALL_DIAMETER < 0:
+            self.update_goal_related_statistics(PLAYER_TEAM_RIGHT)
             self.score_goal(PLAYER_TEAM_RIGHT)
             return PLAYER_TEAM_RIGHT
         # check right goal
         if self.ball.rect.x > SCREEN_WIDTH:
+            self.update_goal_related_statistics(PLAYER_TEAM_LEFT)
             self.score_goal(PLAYER_TEAM_LEFT)
             return PLAYER_TEAM_LEFT
         return None
 
     def score_goal(self, team: int):
+        print(f"Statistics:\n{self.statistics}")
         # update score
         self.score[team] += 1
         print(f"Goal scored: {self.score[PLAYER_TEAM_LEFT]} - {self.score[PLAYER_TEAM_RIGHT]}")
@@ -86,6 +153,7 @@ class Game:
             else:
                 self.ball.x_speed = -self.ball.x_speed
                 self.ball.rect.x = self.walls["left_top"].right
+            self.update_shot_statistics()
 
         # check collision with left_bottom wall
         if ball_beyond_left_border and ball_bellow_goal:
@@ -96,6 +164,7 @@ class Game:
             else:
                 self.ball.x_speed = -self.ball.x_speed
                 self.ball.rect.x = self.walls["left_bottom"].right
+            self.update_shot_statistics()
 
         # check collision with right_top wall
         if ball_beyond_right_border and ball_above_goal:
@@ -106,6 +175,7 @@ class Game:
             else:
                 self.ball.x_speed = -self.ball.x_speed
                 self.ball.rect.x = self.walls["right_top"].left - BALL_DIAMETER
+            self.update_shot_statistics()
 
         # check collision with right_bottom wall
         if ball_beyond_right_border and ball_bellow_goal:
@@ -116,22 +186,27 @@ class Game:
             else:
                 self.ball.x_speed = -self.ball.x_speed
                 self.ball.rect.x = self.walls["right_bottom"].left - BALL_DIAMETER
+            self.update_shot_statistics()
 
         # check collision with top wall
         if self.ball.rect.y <= self.walls["top"].bottom:
             self.ball.y_speed = -self.ball.y_speed
             self.ball.rect.y = self.walls["top"].bottom
+            self.update_shot_statistics()
 
         # check collision with bottom wall
         if (self.ball.rect.y + BALL_DIAMETER) >= self.walls["bottom"].top:
             self.ball.y_speed = -self.ball.y_speed
             self.ball.rect.y = self.walls["bottom"].top - BALL_DIAMETER
+            self.update_shot_statistics()
 
     def move(self):
         # move, check collisions and reverse invalid moves
         for i, player in enumerate(self.players):
             # check player collisions with walls and other players
             player.move()
+            if self.statistics is not None:
+                self.statistics.update_heat_map(player.name, player.rect.x, player.rect.y)
             if player.rect.collidelist(self.players[:i] + self.players[i+1:]) != -1 \
                     or player.rect.collidelist(list(self.walls.values())) != -1 \
                     or player.rect.x < 0 or player.rect.x + player.rect.width > SCREEN_WIDTH:
@@ -140,13 +215,19 @@ class Game:
             if player.rect.colliderect(self.ball.rect):
                 self.n_touches += 1
                 self.last_player_ball_collision[i] = True
+                # push the player to the fifo queue if it is not already there
+                last_player = self.ball_touches_fifo.get_first()
+                if last_player is None or last_player.name != player.name:
+                    self.ball_touches_fifo.push(player)
+                # update ball touch and save statistics
+                self.update_ball_touch_statistics(player)
+                self.update_save_statistics(player)
+                # reverse the ball direction
                 self.ball.x_speed = ((self.ball.rect.centerx - self.ball.x_speed) - (self.players[i].rect.centerx - self.players[i].x_speed))
                 self.ball.y_speed = ((self.ball.rect.centery - self.ball.y_speed) - (self.players[i].rect.centery - self.players[i].y_speed))
                 self.ball.normalize_speed()
-                # update ball touch statistics
-                if self.statistics is not None:
-                    # FIXME: some ball touches are counted twice
-                    self.statistics.update_ball_touches(self.players[i].name)
+                # update direct shot statistics
+                self.update_direct_shot_statistics(player)
             else:
                 self.last_player_ball_collision[i] = False
         # check ball collisions with goal and walls
