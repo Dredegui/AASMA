@@ -9,7 +9,7 @@ import pygame
 import cv2
 
 class Game:
-    def __init__(self, seed=None, padding=400, n_players=4, statistics=None):
+    def __init__(self, seed=None, padding=100, n_players=4, learning_mode=False, statistics=None):
         self.seed = seed
         start_padding = padding
         self.n_players = n_players
@@ -30,8 +30,13 @@ class Game:
         coords = coords[: n_players] + [[SCREEN_WIDTH/2, SCREEN_HEIGHT/2]]
         
         if seed is not None:
-            # generate random coordinates that are not too close to the walls or each other
-            coords = self.randomize_positions(coords)
+            # generate random coordinates that are not too close to the walls or each other 
+            print(coords)
+            if learning_mode:
+                coords = self.randomize_positions_learning(coords, start_padding)
+            else:
+                coords = self.randomize_positions(coords)
+            print(coords)
         self.players = [Player(f"player{i+1}", coords[i][0], coords[i][1], PLAYER_TEAM_LEFT if i%2 == 0 else PLAYER_TEAM_RIGHT, COLORS["red"] if i%2 == 0 else COLORS["green"]) for i in range(self.n_players)]
         self.ball = Ball(coords[n_players][0], coords[n_players][1], BALL_RADIUS)
         self.walls = {
@@ -54,10 +59,20 @@ class Game:
     def set_statistics(self, statistics):
         self.statistics = statistics
 
-    def randomize_positions(self, coords, start_padding=100):
-        for i in range(self.n_players): # +1 for the ball
+    def randomize_positions(self, coords, start_padding=50):
+        for i in range(self.n_players):
             x = np.random.randint(coords[i][0] - start_padding, coords[i][0] + start_padding)
             y = np.random.randint(coords[i][1] - start_padding, coords[i][1] + start_padding)
+            coords[i] = [x, y]
+        return coords
+    
+    def randomize_positions_learning(self, coords, start_padding=100):
+        for i in range(self.n_players + 1): # +1 for the ball
+            x = np.random.randint(start_padding, SCREEN_WIDTH - start_padding - PLAYER_WIDTH)
+            y = np.random.randint(start_padding, SCREEN_HEIGHT - start_padding - PLAYER_HEIGHT)
+            while any([np.sqrt((x - c[0])**2 + (y - c[1])**2) < 2*PLAYER_WIDTH for c in coords]):
+                x = np.random.randint(start_padding, SCREEN_WIDTH - start_padding - PLAYER_WIDTH)
+                y = np.random.randint(start_padding, SCREEN_HEIGHT - start_padding - PLAYER_HEIGHT)
             coords[i] = [x, y]
         return coords
 
@@ -147,7 +162,8 @@ class Game:
         print(f"Statistics:\n{self.statistics}")
         # update score
         self.score[team] += 1
-        self.statistics.update_score(team)
+        if self.statistics is not None:
+            self.statistics.update_score(team)
         print(f"Goal scored: {self.score[PLAYER_TEAM_LEFT]} - {self.score[PLAYER_TEAM_RIGHT]}")
         # reset ball and player positions
         for player in self.players:

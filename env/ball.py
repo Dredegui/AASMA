@@ -26,14 +26,14 @@ class Ball:
             self.x_speed = (self.x_speed / norm) * BALL_SPEED
             self.y_speed = (self.y_speed / norm) * BALL_SPEED
     
-    def reset_position(self):
-        def randomize_positions(x, y, start_padding=100):
+    def reset_position(self, start_padding=50):
+        def randomize_positions(x, y, start_padding=50):
             import numpy as np
             x_out = np.random.randint(x - 2*start_padding, x + 2*start_padding)
             y_out = np.random.randint(y - start_padding, y + start_padding)
             return x_out, y_out
          
-        self.rect.x, self.rect.y = randomize_positions(self.initial_x, self.initial_y)
+        self.rect.x, self.rect.y = randomize_positions(self.initial_x, self.initial_y, start_padding=start_padding)
         self.x_speed = 0
         self.y_speed = 0
 

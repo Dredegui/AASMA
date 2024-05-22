@@ -63,8 +63,8 @@ class footpong(ParallelEnv):
 
     timestep_limit = 20_000 # 1_000_000 timesteps
 
-    def __init__(self, render_mode=None, n_players=4):
-        self.game = Game(n_players=n_players)
+    def __init__(self, render_mode=None, n_players=4, learning_mode=False):
+        self.game = Game(n_players=n_players, learning_mode=learning_mode)
         self.possible_agents = [p.name for p in self.game.players]
         self.agents = self.possible_agents[:]
         self.agent_name_mapping = {p.name: i for i, p in enumerate(self.game.players)}
