@@ -72,6 +72,6 @@ if __name__ == "__main__":
             else:
                 actions[agent] = DONT_MOVE
         next_observations, rewards, terminations, truncations, infos = env.step(actions)
-        clock.tick(30)
+        clock.tick(60)
         env.render()
     env.close()

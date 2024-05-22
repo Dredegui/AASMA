@@ -36,19 +36,13 @@ def signal_handler(sig, frame):
 if __name__ == "__main__":
     os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (100,100)
     signal.signal(signal.SIGINT, signal_handler)
-    env = env.footpong.footpong(render_mode="human", n_players=1)
+    env = env.footpong.footpong(render_mode="human", n_players=1, learning_mode=True)
     env.render()
     n_agents = env.game.n_players
     dqns = [DQN(f"player{i}", len_observation_space=(n_agents + 1)*2, device=device) for i in range(1, n_agents + 1)]
     clock = pygame.time.Clock()
     episodes = 0
-    plot_scores = []
-    plot_mean_scores = []
-    record = 0
-    score = 0
-    total_score = 0
     padding = 200
-    hagent = HardCodedAgent(device=device, name="player2", agent_id=2)
     old_t = time.time()
     # hagent = HardCodedAgent(device=device)
     while episodes < 100:
@@ -75,17 +69,6 @@ if __name__ == "__main__":
                 rewards[agent] = torch.tensor([rewards[agent]], dtype=torch.float32, device=device)
                 if terminations[agent] or truncations[agent]:
                     next_observations[agent] = None
-                    """
-                    if agent == "player1":
-                        score = env.game.score[0]
-                        if score >= record:
-                            record = score
-                        total_score += score
-                        plot_scores.append(score)
-                        mean_score = total_score / episodes
-                        plot_mean_scores.append(mean_score)
-                        plot(plot_scores, plot_mean_scores)
-                    """
                 else:
                     next_observations[agent] = torch.tensor(next_observations[agent], dtype=torch.float32, device=device).unsqueeze(0)
                 dqns[c].push(observations[agent], actions[agent], next_observations[agent], rewards[agent])
