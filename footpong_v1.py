@@ -42,7 +42,6 @@ if __name__ == "__main__":
 
             observations, rewards, terminations, truncations, infos = env.step(actions)
             env.render()
-            time.sleep(0.01)
         statistics[-1].print_statistics()
         print(f"Game {i} finished")
 
