@@ -36,7 +36,7 @@ def signal_handler(sig, frame):
 if __name__ == "__main__":
     os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (100,100)
     signal.signal(signal.SIGINT, signal_handler)
-    env = env.footpong.footpong(render_mode="human")
+    env = env.footpong.footpong(render_mode="human", n_players=2)
     env.render()
     n_agents = env.game.n_players
     dqns = [DQN(f"player{i}", len_observation_space=(n_agents + 1)*2, device=device) for i in range(1, n_agents + 1)]
@@ -48,6 +48,7 @@ if __name__ == "__main__":
     score = 0
     total_score = 0
     padding = 200
+    hagent = HardCodedAgent(device=device, name="player2", agent_id=2)
     old_t = time.time()
     # hagent = HardCodedAgent(device=device)
     while episodes < 500:
@@ -65,9 +66,13 @@ if __name__ == "__main__":
             dqn.decay_epsilon()
         print(dqns[0].epsilon)
         while env.agents:
-            actions = {f"player{i}": dqns[i-1].act(observations[f"player{i}"], env) for i in range(1, n_agents + 1)}
-            # uncomment the following line to use hard coded agent for player3
-            # actions["player3"] = hagent.choose_action(observations["player3"], 2)
+            for i in range(1, n_agents + 1):
+                if i == 2:
+                    actions["player2"] = hagent.act(observations["player2"])
+                else:
+                    actions = {f"player{i}": dqns[i-1].act(observations[f"player{i}"], env) }
+                # uncomment the following line to use hard coded agent for player3
+                # actions["player3"] = hagent.choose_action(observations["player3"], 2)
             # clock.tick(1000)
             next_observations, rewards, terminations, truncations, infos = env.step(actions)
             c = 0
