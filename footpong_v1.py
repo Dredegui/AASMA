@@ -5,7 +5,7 @@ import pickle
 
 from agents.greedy_agent import GreedyAgent
 from agents.random_agent import RandomAgent
-from agents.hard_coded_agent import HardCodedAgent
+from agents.balanced_agent import BalancedAgent
 from agents.goal_keeper_agent import GoalKeeperAgent
 from agents.role_agent import RoleAgent
 from game_statistics import GameStatistics
@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
     roles = {
         "defender": GoalKeeperAgent,
-        "attacker": HardCodedAgent,
+        "attacker": BalancedAgent,
     }
 
     agents = [
@@ -42,6 +42,7 @@ if __name__ == "__main__":
 
             observations, rewards, terminations, truncations, infos = env.step(actions)
             env.render()
+            time.sleep(0.01)
         statistics[-1].print_statistics()
         print(f"Game {i} finished")
 
@@ -54,5 +55,4 @@ if __name__ == "__main__":
         # dump pickle
         with open("statistics.pkl", "wb") as f:
             pickle.dump(statistics_dict, f)
-
     env.close()

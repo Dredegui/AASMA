@@ -4,7 +4,7 @@ import torch
 import numpy as np
 import random as rnd
 
-class HardCodedAgent(Agent):
+class BalancedAgent(Agent):
 	def __init__(self, name, agent_id, device=None):
 		super().__init__(name, agent_id)
 		self.device = device
@@ -27,6 +27,37 @@ class HardCodedAgent(Agent):
 			if (ball[0] < max_distance and not(max_distance < ball[1] < SCREEN_HEIGHT - max_distance)):
 				return MOVE_RIGHT
 		return None
+
+
+	def _stuck_case(self, observation, action):
+		ball = observation[-2:]
+		player = observation[(self.agent_id-1)*2:(self.agent_id-1)*2+2]
+		# check if ball is between player and another player
+		if self.device is not None:
+			ball = ball.cpu()
+			player = player.cpu()
+		for i in range(1, 4):
+			if i == self.agent_id:
+				continue
+			other_player = observation[(i-1)*2:(i-1)*2+2]
+			if self.device is not None:
+				other_player = other_player.cpu()
+			other_distance = np.linalg.norm(np.array(other_player) - np.array(ball))
+			distance = np.linalg.norm(np.array(player) - np.array(ball))
+			"""
+			if (abs(distance) < 100 and abs(other_distance) < 100):
+				print("Distance", distance, "Other distance", other_distance)
+				print("Observation", observation)
+			"""
+			if ((other_player[0] < ball[0] < player[0]) or (other_player[0] > ball[0] > player[0])) and (abs(distance) < PLAYER_WIDTH or abs(other_distance) < PLAYER_WIDTH) and abs(distance - other_distance) < PLAYER_WIDTH:
+				# return any other random action
+				print("Stuck case")
+				tmp = action
+				while tmp == action:
+					tmp = rnd.randint(0, 3)
+				return tmp
+		return None
+
 
 	def _choose_action_left_team(self, observation):
 		if observation is None:
@@ -76,6 +107,10 @@ class HardCodedAgent(Agent):
 			tmp = self._corner_case(observation)
 			if tmp is not None:
 				action = tmp
+			else:
+				tmp = self._stuck_case(observation, action)
+				if tmp is not None:
+					action = tmp
 			if self.device is not None:
 				return torch.tensor([[action]], dtype=torch.long, device=self.device)
 			return action

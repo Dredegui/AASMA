@@ -12,7 +12,7 @@ from plotter import plot
 import time
 import os
 import signal
-from agents.hard_coded_agent import HardCodedAgent
+from agents.balanced_agent import HardCodedAgent
 
 is_ipython = 'inline' in matplotlib.get_backend()
 if is_ipython:
