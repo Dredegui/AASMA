@@ -31,12 +31,10 @@ class Game:
         
         if seed is not None:
             # generate random coordinates that are not too close to the walls or each other 
-            print(coords)
             if learning_mode:
                 coords = self.randomize_positions_learning(coords, start_padding)
             else:
                 coords = self.randomize_positions(coords)
-            print(coords)
         self.players = [Player(f"player{i+1}", coords[i][0], coords[i][1], PLAYER_TEAM_LEFT if i%2 == 0 else PLAYER_TEAM_RIGHT, COLORS["red"] if i%2 == 0 else COLORS["green"]) for i in range(self.n_players)]
         self.ball = Ball(coords[n_players][0], coords[n_players][1], BALL_RADIUS)
         self.walls = {
