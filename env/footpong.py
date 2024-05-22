@@ -10,7 +10,7 @@ import gymnasium
 from pettingzoo.utils import parallel_to_aec, wrappers
 import pygame
 
-def env(render_mode=None):
+def env(render_mode=None, n_players=4):
     """
     The env function often wraps the environment in wrappers by default.
     You can find full documentation for these methods
@@ -18,7 +18,7 @@ def env(render_mode=None):
     """
     internal_render_mode = render_mode if render_mode in ["rgb_array"] else "human"
 
-    env = raw_env(render_mode=internal_render_mode)
+    env = raw_env(render_mode=internal_render_mode, n_players=n_players)
     # This wrapper is only for environments which print results to the terminal
     if render_mode == "ansi":
         env = wrappers.CaptureStdoutWrapper(env)
@@ -29,12 +29,12 @@ def env(render_mode=None):
     env = wrappers.OrderEnforcingWrapper(env)
     return env
 
-def raw_env(render_mode=None):
+def raw_env(render_mode=None, n_players=4):
     """
     To support the AEC API, the raw_env() function just uses the from_parallel
     function to convert from a ParallelEnv to an AEC env
     """
-    env = footpong(render_mode=render_mode)
+    env = footpong(render_mode=render_mode, n_players=n_players)
     env = parallel_to_aec(env)
     return env
 
@@ -61,10 +61,10 @@ class footpong(ParallelEnv):
         "render_modes": ["human", "rgb_array"],
     }
 
-    timestep_limit = 10_000 # 1_000_000 timesteps
+    timestep_limit = 1_000 # 1_000_000 timesteps
 
-    def __init__(self, render_mode=None):
-        self.game = Game(n_players=4)
+    def __init__(self, render_mode=None, n_players=4):
+        self.game = Game(n_players=n_players)
         self.possible_agents = [p.name for p in self.game.players]
         self.agents = self.possible_agents[:]
         self.agent_name_mapping = {p.name: i for i, p in enumerate(self.game.players)}

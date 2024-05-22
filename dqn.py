@@ -5,6 +5,7 @@ import torch.nn.functional as F
 import random
 import numpy as np
 import os
+from env.constants import *
 from collections import namedtuple, deque
 
 
@@ -29,9 +30,10 @@ class Net(nn.Module):
         # normalize the state
         # shallow copy the state
         sc_state = state.clone()
-        sc_state[:, 0::2] /= 800
-        sc_state[:, 1::2] /= 600
-
+        sc_state[:, 0::2] = sc_state[:, 0::2] / PLAYER_WIDTH
+        sc_state[:, 1::2] = sc_state[:, 1::2] / PLAYER_HEIGHT
+        sc_state = sc_state.int()
+        sc_state = sc_state.float()
         sc_state = F.relu(self.fc1(sc_state))
         sc_state = F.relu(self.fc2(sc_state))
         sc_state = F.relu(self.fc3(sc_state))
@@ -50,7 +52,7 @@ class Net(nn.Module):
             self.to(device)
     
 class DQN():
-    def __init__(self, player, gamma=0.995, lr=0.001, epsilon=0.9, len_observation_space=10, len_action_space=5, device="cpu"):
+    def __init__(self, player, gamma=0.995, lr=0.001, epsilon=0.90, len_observation_space=10, len_action_space=5, device="cpu"):
         self.player = player
         self.path = f"models/{player}.pt"
         self.gamma = gamma
@@ -71,9 +73,10 @@ class DQN():
     def check_device(self):
         print(self.device)
 
-    def choose_action(self, state, env):
+    def act(self, state):
         if np.random.rand() < self.epsilon:
-            return torch.tensor([[env.action_space(self.player).sample()]], device=self.device, dtype=torch.long)
+            random_action = np.random.randint(0, self.len_action_space)
+            return torch.tensor([[random_action]], device=self.device, dtype=torch.long)
         with torch.no_grad():
             action_value = self.model.to(device=self.device)(state)
             return action_value.max(1).indices.view(1, 1)
