@@ -10,6 +10,8 @@ from agents.goal_keeper_agent import GoalKeeperAgent
 from agents.role_agent import RoleAgent
 from game_statistics import GameStatistics
 
+import time
+
 if __name__ == "__main__":
     env = env.footpong.footpong(render_mode="human")
     env.render()
@@ -18,7 +20,7 @@ if __name__ == "__main__":
 
     roles = {
         "defender": GoalKeeperAgent,
-        "attacker": HardCodedAgent
+        "attacker": HardCodedAgent,
     }
 
     agents = [
@@ -29,7 +31,7 @@ if __name__ == "__main__":
     ]
 
 
-    for i in range(2):
+    for i in range(50):
         observations, _ = env.reset(seed=42)
         statistics.append(GameStatistics(env.agents))
         env.game.set_statistics(statistics[-1])
@@ -41,6 +43,7 @@ if __name__ == "__main__":
             observations, rewards, terminations, truncations, infos = env.step(actions)
             env.render()
         statistics[-1].print_statistics()
+        print(f"Game {i} finished")
 
     if statistics is not None:
         statistics = [s.get_dict() for s in statistics]

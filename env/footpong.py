@@ -61,7 +61,7 @@ class footpong(ParallelEnv):
         "render_modes": ["human", "rgb_array"],
     }
 
-    timestep_limit = 1_000 # 1_000_000 timesteps
+    timestep_limit = 20_000 # 1_000_000 timesteps
 
     def __init__(self, render_mode=None, n_players=4):
         self.game = Game(n_players=n_players)
@@ -81,7 +81,7 @@ class footpong(ParallelEnv):
             players_coords += [p.rect.x, p.rect.y]
         return players_coords + [self.game.ball.rect.x, self.game.ball.rect.y]
 
-    def reset(self, seed=None, options=None, padding=200, statistics=None):
+    def reset(self, seed=None, options=None, padding=100, statistics=None):
         self.timestamp = 0
         self.agents = self.possible_agents[:]
         self.game = Game(seed=seed, padding=padding, n_players=self.game.n_players, statistics=statistics)
@@ -108,7 +108,7 @@ class footpong(ParallelEnv):
                 rewards[agent] += 20
                 will_collide = check_collision_route_with_goal(self.game)
                 if will_collide is not None:
-                    print(f"Will collide: {will_collide}")
+                    #print(f"Will collide: {will_collide}")
                     if will_collide == self.game.players[c].team:
                         rewards[agent] -= 50
                     else:
@@ -120,8 +120,8 @@ class footpong(ParallelEnv):
             else:
                 rewards[agent] -= 0.1
             
-            if rewards[agent] > 0.3:
-                print(f"Calculating reward for agent {agent}: {rewards[agent]}")
+            #if rewards[agent] > 0.3:
+                #print(f"Calculating reward for agent {agent}: {rewards[agent]}")
             """
             if new_distance != 0:
                 rewards[agent] += np.exp(-0.5 * new_distance) * 1_000
@@ -200,6 +200,9 @@ class footpong(ParallelEnv):
         self.timestamp += 1
         if any(terminations.values()) or all(truncations.values()):
             self.agents = []
+        
+        if all(truncations.values()):
+            self.game.statistics.update_truncated()
         
         return observation, rewards, terminations, truncations, infos
 

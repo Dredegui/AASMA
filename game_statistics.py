@@ -8,6 +8,8 @@ class GameStatistics:
 
     def __init__(self, players):
         self.players = players
+        self.score = [0, 0]
+        self.truncated = False
         self.ball_touches = {player: 0 for player in players}
         self.goals = {player: 0 for player in players}
         self.own_goals = {player: 0 for player in players}
@@ -62,6 +64,12 @@ class GameStatistics:
             print(f"Heat map for player {player}:")
             print(self.heat_map[player])
 
+    def update_score(self, team):
+        self.score[team] += 1
+
+    def update_truncated(self):
+        self.truncated = True
+
     def print_statistics(self):
         print(self)
 
@@ -89,14 +97,17 @@ class GameStatistics:
             direct_shots += f"{self.direct_shots[player]}\t"
             passes += f"{self.passes[player]}\t"
 
-        return f"{players}\n{ball_t}\n{goals}\n{own_goals}\n{saves}\n{blocked_shots}\n{shots}\n{direct_shots}\n{assists}\n{passes}\n{self.print_heat_map()}"
+        return f"{players}\n{ball_t}\n{goals}\n{own_goals}\n{saves}\n{blocked_shots}\n{shots}\n{direct_shots}\n{assists}\n{passes}\nScore: {self.score}\nTruncated: {self.truncated}\n{self.print_heat_map()}"
 
     def save(self):
         with open("statistics.json", "w") as f:
             json.dump(self.__dict__, f, default=lambda x: x.tolist())
 
     def get_dict(self):
-        dict = {}
+        dict = {
+            "score": self.score,
+            "truncated": self.truncated
+        }
         for player in self.players:
             dict[player] = {
                 "ball_touches": self.ball_touches[player],

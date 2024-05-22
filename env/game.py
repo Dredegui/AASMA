@@ -3,26 +3,35 @@ from .ball import Ball
 from .constants import *
 from fifo_queue import Fifo
 import numpy as np
+from copy import deepcopy
 
 import pygame
 import cv2
 
 class Game:
-    def __init__(self, seed=None, padding=200, n_players=4, statistics=None):
+    def __init__(self, seed=None, padding=400, n_players=4, statistics=None):
         self.seed = seed
         start_padding = padding
         self.n_players = n_players
         self.statistics = statistics
-        coords = [[start_padding, SCREEN_HEIGHT - (start_padding + PLAYER_HEIGHT)],
-                  [SCREEN_WIDTH - (start_padding + PLAYER_WIDTH), SCREEN_HEIGHT - (start_padding + PLAYER_HEIGHT)],
-                  [start_padding, start_padding],
-                  [SCREEN_WIDTH - (start_padding + PLAYER_WIDTH), start_padding],
-                  [SCREEN_WIDTH/2, SCREEN_HEIGHT/2]]
+        #coords = [[start_padding, SCREEN_HEIGHT - (start_padding + PLAYER_HEIGHT)],
+        #          [SCREEN_WIDTH - (start_padding + PLAYER_WIDTH), SCREEN_HEIGHT - (start_padding + PLAYER_HEIGHT)],
+        #          [start_padding, start_padding],
+        #          [SCREEN_WIDTH - (start_padding + PLAYER_WIDTH), start_padding],
+        #          [SCREEN_WIDTH/2, SCREEN_HEIGHT/2]]
+        coords = [
+            [SCREEN_WIDTH/4, SCREEN_HEIGHT/2-padding-PLAYER_HEIGHT],
+            [SCREEN_WIDTH - SCREEN_WIDTH/4 - PLAYER_WIDTH/2, SCREEN_HEIGHT/2-padding-PLAYER_HEIGHT],
+            [SCREEN_WIDTH/4, SCREEN_HEIGHT/2+padding],
+            [SCREEN_WIDTH - SCREEN_WIDTH/4 - PLAYER_WIDTH/2, SCREEN_HEIGHT/2+padding],
+            
+            [SCREEN_WIDTH/2 - BALL_RADIUS, SCREEN_HEIGHT/2 - BALL_RADIUS]
+        ]
         coords = coords[: n_players] + [[SCREEN_WIDTH/2, SCREEN_HEIGHT/2]]
-        print(self.seed)
+        
         if seed is not None:
             # generate random coordinates that are not too close to the walls or each other
-            coords = self.randomize_positions(coords, start_padding)
+            coords = self.randomize_positions(coords)
         self.players = [Player(f"player{i+1}", coords[i][0], coords[i][1], PLAYER_TEAM_LEFT if i%2 == 0 else PLAYER_TEAM_RIGHT, COLORS["red"] if i%2 == 0 else COLORS["green"]) for i in range(self.n_players)]
         self.ball = Ball(coords[n_players][0], coords[n_players][1], BALL_RADIUS)
         self.walls = {
@@ -36,19 +45,19 @@ class Game:
         self.score = [0, 0]
         self.last_player_ball_collision = {i: False for i in range(self.n_players)}
         self.ball_touches_fifo = Fifo(2)
+        self.passes_fifo = Fifo(2)
         self.screen = None
         self.n_touches = 0
+        self.timestamp = 0
+        self.timestamp_limit = 2_500
 
     def set_statistics(self, statistics):
         self.statistics = statistics
 
-    def randomize_positions(self, coords, start_padding=200):
-        for i in range(self.n_players + 1): # +1 for the ball
-            x = np.random.randint(start_padding, SCREEN_WIDTH - start_padding - PLAYER_WIDTH)
-            y = np.random.randint(start_padding, SCREEN_HEIGHT - start_padding - PLAYER_HEIGHT)
-            while any([np.sqrt((x - c[0])**2 + (y - c[1])**2) < 2*PLAYER_WIDTH for c in coords]):
-                x = np.random.randint(start_padding, SCREEN_WIDTH - start_padding - PLAYER_WIDTH)
-                y = np.random.randint(start_padding, SCREEN_HEIGHT - start_padding - PLAYER_HEIGHT)
+    def randomize_positions(self, coords, start_padding=100):
+        for i in range(self.n_players): # +1 for the ball
+            x = np.random.randint(coords[i][0] - start_padding, coords[i][0] + start_padding)
+            y = np.random.randint(coords[i][1] - start_padding, coords[i][1] + start_padding)
             coords[i] = [x, y]
         return coords
 
@@ -72,6 +81,12 @@ class Game:
         if self.statistics is not None:
             # FIXME: some ball touches are counted twice
             self.statistics.update_ball_touches(player.name)
+
+    def update_passes_statistics(self, player: Player):
+        if self.statistics is not None:
+            prev_player = self.passes_fifo.get_last_in_max_size()
+            if prev_player is not None and prev_player.team == player.team and prev_player.name != player.name:
+                self.statistics.update_passes(prev_player.name)
     
     def update_shot_statistics(self):
         if self.statistics is not None:
@@ -132,6 +147,7 @@ class Game:
         print(f"Statistics:\n{self.statistics}")
         # update score
         self.score[team] += 1
+        self.statistics.update_score(team)
         print(f"Goal scored: {self.score[PLAYER_TEAM_LEFT]} - {self.score[PLAYER_TEAM_RIGHT]}")
         # reset ball and player positions
         for player in self.players:
@@ -205,6 +221,13 @@ class Game:
             self.update_shot_statistics()
 
     def move(self):
+        self.timestamp += 1
+        if self.timestamp >= self.timestamp_limit:
+            for player in self.players:
+                player.reset_position()
+            self.ball.reset_position()
+            self.timestamp = 0
+            return None
         # move, check collisions and reverse invalid moves
         for i, player in enumerate(self.players):
             # check player collisions with walls and other players
@@ -223,8 +246,10 @@ class Game:
                 last_player = self.ball_touches_fifo.get_first()
                 if last_player is None or last_player.name != player.name:
                     self.ball_touches_fifo.push(player)
+                self.passes_fifo.push(player)
                 # update ball touch and save statistics
                 self.update_ball_touch_statistics(player)
+                self.update_passes_statistics(player)
                 self.update_save_statistics(player)
                 # reverse the ball direction
                 self.ball.x_speed = ((self.ball.rect.centerx - self.ball.x_speed) - (self.players[i].rect.centerx - self.players[i].x_speed))
