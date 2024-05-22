@@ -1,15 +1,14 @@
-import env.footpong
-from env.constants import *
-from time import sleep
 from sys import argv
+import os
+import signal
 import torch
 import matplotlib
 import matplotlib.pyplot as plt
-from dqn import DQN
 import pygame
-from plotter import plot
-import os
-import signal
+import env.footpong
+from env.constants import *
+from dqn import DQN
+from game_statistics import GameStatistics
 
 is_ipython = 'inline' in matplotlib.get_backend()
 if is_ipython:
@@ -29,6 +28,8 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
     env = env.footpong.footpong(render_mode="human")
     env.render()
+    statistics = GameStatistics(env.agents)
+    env.game.set_statistics(statistics)
     n_agents = env.game.n_players
     dqns = [DQN(f"player{i}", len_observation_space=(n_agents + 1)*2, device=device) for i in range(1, n_agents + 1)]
     user_mode = NO_USER
@@ -70,5 +71,7 @@ if __name__ == "__main__":
                     actions[agent] = DONT_MOVE
             else:
                 actions[agent] = DONT_MOVE
+        next_observations, rewards, terminations, truncations, infos = env.step(actions)
         clock.tick(30)
+        env.render()
     env.close()
