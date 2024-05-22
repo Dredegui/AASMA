@@ -46,7 +46,7 @@ class HardCodedAgent(Agent):
 					return MOVE_DOWN
 			else:
 				return MOVE_LEFT
-		
+
 	def _choose_action_right_team(self, observation):
 		if observation is None:
 			return DONT_MOVE
