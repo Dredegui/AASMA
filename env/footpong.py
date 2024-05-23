@@ -65,6 +65,7 @@ class footpong(ParallelEnv):
 
     def __init__(self, render_mode=None, n_players=4, learning_mode=False):
         self.game = Game(n_players=n_players, learning_mode=learning_mode)
+        self.learning_mode = learning_mode
         self.possible_agents = [p.name for p in self.game.players]
         self.agents = self.possible_agents[:]
         self.agent_name_mapping = {p.name: i for i, p in enumerate(self.game.players)}
@@ -151,8 +152,8 @@ class footpong(ParallelEnv):
         done = self.game.score[0] == MAX_SCORE or self.game.score[1] == MAX_SCORE
         # stop the game after 5 touches
         # done = False
-        #if self.game.n_touches > 0:
-        #    done = True
+        if self.learning_mode and self.game.n_touches > 0:
+            done = True
         observation = {}
         terminations = {}
         truncations = {}
