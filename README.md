@@ -11,3 +11,6 @@ pip install -r requirements.txt
 ```bash
 python game_simulate.py
 ```
+
+### Plotting the results
+To plot the results, open the `plot.ipynb` notebook and run all cells.
