@@ -14,11 +14,6 @@ class Game:
         start_padding = padding
         self.n_players = n_players
         self.statistics = statistics
-        #coords = [[start_padding, SCREEN_HEIGHT - (start_padding + PLAYER_HEIGHT)],
-        #          [SCREEN_WIDTH - (start_padding + PLAYER_WIDTH), SCREEN_HEIGHT - (start_padding + PLAYER_HEIGHT)],
-        #          [start_padding, start_padding],
-        #          [SCREEN_WIDTH - (start_padding + PLAYER_WIDTH), start_padding],
-        #          [SCREEN_WIDTH/2, SCREEN_HEIGHT/2]]
         coords = [
             [SCREEN_WIDTH/4, SCREEN_HEIGHT/2-padding-PLAYER_HEIGHT],
             [SCREEN_WIDTH - SCREEN_WIDTH/4 - PLAYER_WIDTH/2, SCREEN_HEIGHT/2-padding-PLAYER_HEIGHT],
@@ -92,7 +87,6 @@ class Game:
 
     def update_ball_touch_statistics(self, player: Player):
         if self.statistics is not None:
-            # FIXME: some ball touches are counted twice
             self.statistics.update_ball_touches(player.name)
 
     def update_passes_statistics(self, player: Player):

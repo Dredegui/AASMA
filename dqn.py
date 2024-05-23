@@ -30,10 +30,8 @@ class Net(nn.Module):
         # normalize the state
         # shallow copy the state
         sc_state = state.clone()
-        sc_state[:, 0::2] = sc_state[:, 0::2] / PLAYER_WIDTH
-        sc_state[:, 1::2] = sc_state[:, 1::2] / PLAYER_HEIGHT
-        sc_state = sc_state.int()
-        sc_state = sc_state.float()
+        sc_state[:, 0::2] = sc_state[:, 0::2] / 800
+        sc_state[:, 1::2] = sc_state[:, 1::2] / 600
         sc_state = F.relu(self.fc1(sc_state))
         sc_state = F.relu(self.fc2(sc_state))
         sc_state = F.relu(self.fc3(sc_state))
@@ -60,7 +58,7 @@ class DQN():
         self.epsilon = epsilon
         self.len_observation_space = len_observation_space
         self.len_action_space = len_action_space
-        self.batch_size = 256 # TODO review this 
+        self.batch_size = 256
         self.device = device
         self.model = Net(self.len_observation_space, self.len_action_space, device=self.device)
         self.model.load(self.path, device=self.device)

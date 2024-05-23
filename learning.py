@@ -8,11 +8,9 @@ import matplotlib.pyplot as plt
 from dqn import DQN
 import random as r
 import pygame
-from plotter import plot
 import time
 import os
 import signal
-from agents.balanced_agent import HardCodedAgent
 
 is_ipython = 'inline' in matplotlib.get_backend()
 if is_ipython:
@@ -44,7 +42,6 @@ if __name__ == "__main__":
     episodes = 0
     padding = 200
     old_t = time.time()
-    # hagent = HardCodedAgent(device=device)
     while episodes < 100:
         t = time.time()
         print(f"Time: {t - old_t}, episode: {episodes}")
@@ -54,14 +51,13 @@ if __name__ == "__main__":
         seed = None
         if episodes > 1:
             seed = r.randint(0, 1000)
-        observations, _ = env.reset(seed=seed)
+        observations, _ = env.reset(seed=seed, learning_mode=True)
         observations ={agent: torch.tensor(observations[agent], dtype=torch.float32, device=device).unsqueeze(0) for agent in env.agents}
         for dqn in dqns:
             dqn.decay_epsilon()
         print(dqns[0].epsilon)
         while env.agents:
             actions = {f"player{i}": dqns[i-1].act(observations[f"player{i}"]) for i in range(1, n_agents + 1)}
-            # clock.tick(1000)
             next_observations, rewards, terminations, truncations, infos = env.step(actions)
             c = 0
             while c < n_agents: # for agent in env.agents:

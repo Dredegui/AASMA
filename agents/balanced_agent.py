@@ -1,6 +1,5 @@
 from agents.agent import Agent
 from env.constants import *
-import torch
 import numpy as np
 import random as rnd
 
@@ -44,14 +43,8 @@ class BalancedAgent(Agent):
 				other_player = other_player.cpu()
 			other_distance = np.linalg.norm(np.array(other_player) - np.array(ball))
 			distance = np.linalg.norm(np.array(player) - np.array(ball))
-			"""
-			if (abs(distance) < 100 and abs(other_distance) < 100):
-				print("Distance", distance, "Other distance", other_distance)
-				print("Observation", observation)
-			"""
 			if ((other_player[0] < ball[0] < player[0]) or (other_player[0] > ball[0] > player[0])) and (abs(distance) < PLAYER_WIDTH or abs(other_distance) < PLAYER_WIDTH) and abs(distance - other_distance) < PLAYER_WIDTH:
 				# return any other random action
-				print("Stuck case")
 				tmp = action
 				while tmp == action:
 					tmp = rnd.randint(0, 3)
@@ -111,15 +104,11 @@ class BalancedAgent(Agent):
 				tmp = self._stuck_case(observation, action)
 				if tmp is not None:
 					action = tmp
-			if self.device is not None:
-				return torch.tensor([[action]], dtype=torch.long, device=self.device)
 			return action
 		else:
 			action = self._choose_action_right_team(observation)
 			tmp = self._corner_case(observation)
 			if tmp is not None:
 				action = tmp
-			if self.device is not None:
-				return torch.tensor([[action]], dtype=torch.long, device=self.device)
 			return action
 			

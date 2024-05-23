@@ -61,7 +61,7 @@ class footpong(ParallelEnv):
         "render_modes": ["human", "rgb_array"],
     }
 
-    timestep_limit = 20_000 # 1_000_000 timesteps
+    timestep_limit = 20_000
 
     def __init__(self, render_mode=None, n_players=4, learning_mode=False):
         self.game = Game(n_players=n_players, learning_mode=learning_mode)
@@ -81,13 +81,12 @@ class footpong(ParallelEnv):
             players_coords += [p.rect.x, p.rect.y]
         return players_coords + [self.game.ball.rect.x, self.game.ball.rect.y]
 
-    def reset(self, seed=None, options=None, padding=100, statistics=None):
+    def reset(self, seed=None, options=None, padding=100, statistics=None, learning_mode=False):
         self.timestamp = 0
         self.agents = self.possible_agents[:]
-        self.game = Game(seed=seed, padding=padding, n_players=self.game.n_players, statistics=statistics)
+        self.game = Game(seed=seed, padding=padding, n_players=self.game.n_players, statistics=statistics, learning_mode=learning_mode)
         observations = {agent: self.observe(agent) for agent in self.agents}
         infos = {agent: {} for agent in self.agents}
-
         return observations, infos
     
     # Custom reward function (not used in the current implementation)
@@ -106,37 +105,11 @@ class footpong(ParallelEnv):
             new_distance = np.linalg.norm(np.array(observation[agent][-2:]) - np.array(observation[agent][2*c:2*(c+1)]))
             if self.game.last_player_ball_collision[c]:
                 rewards[agent] += 20
-                will_collide = check_collision_route_with_goal(self.game)
-                if will_collide is not None:
-                    #print(f"Will collide: {will_collide}")
-                    if will_collide == self.game.players[c].team:
-                        rewards[agent] -= 50
-                    else:
-                        rewards[agent] += 50
-
             # TRAIN THE AGENT TO HIT THE BALL
             if new_distance < old_distance and actions[agent] != DONT_MOVE:
                 rewards[agent] += np.exp(-0.5 * new_distance) * 10_000 + 0.1
             else:
                 rewards[agent] -= 0.1
-            
-            #if rewards[agent] > 0.3:
-                #print(f"Calculating reward for agent {agent}: {rewards[agent]}")
-            """
-            if new_distance != 0:
-                rewards[agent] += np.exp(-0.5 * new_distance) * 1_000
-            # check if the ball is stopped for a long time
-            if new_distance < old_distance and actions[agent] != DONT_MOVE:
-                # give reward to the player that got closer to the ball
-                # decrease the reward according to the epsilon 
-                rewards[agent] += 0.1 / max(1, (old_distance - new_distance))
-            else:
-                rewards[agent] += -0.001 * self.steps_stopped_ball
-            # round the rewards to 5 decimal places
-            if self.steps_stopped_ball > 1000:
-                rewards[agent] += -0.01 
-            rewards[agent] = round(rewards[agent], 5)
-            """
             c += 1
         return rewards
     
@@ -178,8 +151,8 @@ class footpong(ParallelEnv):
         done = self.game.score[0] == MAX_SCORE or self.game.score[1] == MAX_SCORE
         # stop the game after 5 touches
         # done = False
-        # if self.game.n_touches > 4:
-        #     done = True
+        #if self.game.n_touches > 0:
+        #    done = True
         observation = {}
         terminations = {}
         truncations = {}
