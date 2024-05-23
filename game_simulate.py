@@ -34,7 +34,7 @@ def run_game(n_games=5, tick_rate=0):
             agents.append(RandomAgent(f"player{i}", agent_id=i))
         elif saved_agents[f"player{i}"] == "balanced":
             agents.append(BalancedAgent(f"player{i}", agent_id=i))
-        elif saved_agents[f"player{i}"] == "goal_keeper":
+        elif saved_agents[f"player{i}"] == "goalkeeper":
             agents.append(GoalKeeperAgent(f"player{i}", agent_id=i))
         elif saved_agents[f"player{i}"] == "role_agent(goalkeeper, greedy)":
             agents.append(RoleAgent(f"player{i}", i, {
